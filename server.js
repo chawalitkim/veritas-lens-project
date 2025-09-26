@@ -116,7 +116,7 @@ async function verifyWithGemini(claim, evidence) {
         const text = response.text();
         
         // Clean up the text to ensure it's valid JSON
-        const jsonString = text.replace(/```json/g, '').replace(/```g, '').trim();
+        const jsonString = text.replace(/```json/g, '').replace(/```/g, '').trim();
         
         return JSON.parse(jsonString);
 
