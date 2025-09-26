@@ -6,15 +6,12 @@ const { GoogleGenerativeAI } = require('@google/generative-ai');
 const app = express();
 const port = process.env.PORT || 3000;
 
-// --- START OF CORS FIX ---
+// --- START OF CORS DEBUGGING FIX ---
 // Middleware
-// Explicitly configure CORS to allow requests from your specific frontend URL
-const corsOptions = {
-  origin: 'https://veritas-lens-project-1.onrender.com', // The exact URL of your frontend app from the error log
-  optionsSuccessStatus: 200 // For legacy browser support and to handle preflight requests
-};
-app.use(cors(corsOptions));
-// --- END OF CORS FIX ---
+// Using the simplest CORS configuration to allow all origins for debugging purposes.
+// This will help confirm if the new code is being deployed correctly.
+app.use(cors());
+// --- END OF CORS DEBUGGING FIX ---
 
 app.use(express.json());
 
