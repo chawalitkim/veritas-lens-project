@@ -15,9 +15,9 @@ app.use(cors());
 
 app.use(express.json());
 
-// Simple check to see if the server is alive
+// Simple check to see if the server is alive - WITH VERSION CHECK
 app.get('/', (req, res) => {
-  res.send('Veritas Lens AI Server is running!');
+  res.send('Veritas Lens AI Server is running! - v2 CORS FIX');
 });
 
 
@@ -116,7 +116,7 @@ async function verifyWithGemini(claim, evidence) {
         const text = response.text();
         
         // Clean up the text to ensure it's valid JSON
-        const jsonString = text.replace(/```json/g, '').replace(/```/g, '').trim();
+        const jsonString = text.replace(/```json/g, '').replace(/```g, '').trim();
         
         return JSON.parse(jsonString);
 
