@@ -6,18 +6,12 @@ const { GoogleGenerativeAI } = require('@google/generative-ai');
 const app = express();
 const port = process.env.PORT || 3000;
 
-// --- START OF CORS DEBUGGING FIX ---
-// Middleware
-// Using the simplest CORS configuration to allow all origins for debugging purposes.
-// This will help confirm if the new code is being deployed correctly.
 app.use(cors());
-// --- END OF CORS DEBUGGING FIX ---
-
 app.use(express.json());
 
-// Simple check to see if the server is alive - WITH VERSION CHECK
+// Simple check to see if the server is alive - FINAL VERSION CHECK
 app.get('/', (req, res) => {
-  res.send('Veritas Lens AI Server is running! - v2 CORS FIX');
+  res.send('Veritas Lens AI Server is running! - v3-FINAL-DEPLOY-CHECK');
 });
 
 
