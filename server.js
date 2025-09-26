@@ -92,7 +92,7 @@ function findEvidence(claim) {
  */
 async function verifyWithGemini(claim, evidence) {
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-    const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-1.0-pro' });
 
     const prompt = `
         Act as an expert fact-checker. Analyze the relationship between the 'claim' and the provided 'evidence'.
