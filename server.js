@@ -6,12 +6,16 @@ const { GoogleGenerativeAI } = require('@google/generative-ai');
 const app = express();
 const port = process.env.PORT || 3000;
 
-app.use(cors());
+// Use CORS middleware to allow requests from your frontend
+app.use(cors({
+    origin: '*' // Allows all origins for simplicity in this student project
+}));
+
 app.use(express.json());
 
-// Simple check to see if the server is alive - FINAL VERSION CHECK
+// A simple endpoint to confirm the server is running
 app.get('/', (req, res) => {
-  res.send('Veritas Lens AI Server is running! - v3-FINAL-DEPLOY-CHECK');
+  res.send('Veritas Lens AI Server is running!');
 });
 
 
@@ -54,12 +58,8 @@ app.listen(port, () => {
 
 /**
  * Phase 4 (Simulated): Finds mock evidence related to a claim.
- * In a real-world scenario, this would involve searching databases, news APIs, etc.
- * @param {string} claim - The user's claim.
- * @returns {object} An object with supporting and contradicting evidence.
  */
 function findEvidence(claim) {
-    // This is a simple simulation. A real implementation would use a search API.
     const lowerCaseClaim = claim.toLowerCase();
     if (lowerCaseClaim.includes('siriraj') || lowerCaseClaim.includes('ศิริราช')) {
         return {
@@ -70,7 +70,6 @@ function findEvidence(claim) {
             ]
         };
     }
-    // Default evidence for other claims
     return {
         supports: [{ source: 'https://example.com', text: 'This is a generic piece of supporting evidence as no specific keywords were matched.' }],
         contradicts: [{ source: 'https://example.com', text: 'This is a generic piece of contradicting evidence.' }]
@@ -80,13 +79,11 @@ function findEvidence(claim) {
 
 /**
  * Phase 5: Uses Google Gemini to verify the claim against the evidence.
- * @param {string} claim - The user's claim.
- * @param {object} evidence - The evidence found.
- * @returns {Promise<object>} A promise that resolves to the verification result from Gemini.
  */
 async function verifyWithGemini(claim, evidence) {
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+    // FINAL FIX: Using a model name confirmed to be available from your test script.
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-preview-05-20' });
 
     const prompt = `
         Act as an expert fact-checker. Analyze the relationship between the 'claim' and the provided 'evidence'.
@@ -109,7 +106,6 @@ async function verifyWithGemini(claim, evidence) {
         const response = await result.response;
         const text = response.text();
         
-        // Clean up the text to ensure it's valid JSON
         const jsonString = text.replace(/```json/g, '').replace(/```/g, '').trim();
         
         return JSON.parse(jsonString);
