@@ -6,6 +6,38 @@ const { GoogleGenerativeAI } = require('@google/generative-ai');
 const app = express();
 const port = process.env.PORT || 3000;
 
+// --- Phase 1 (Simulated): In-Memory Knowledge Base ---
+// In a real-world application, this data would come from a dedicated database (e.g., MongoDB, PostgreSQL)
+// which would be populated by downloading and parsing datasets from sources like datacommons.org.
+const FACT_CHECK_DB = [
+    {
+        claimReviewed: "The Eiffel Tower is located in Berlin.",
+        source: "https://en.wikipedia.org/wiki/Eiffel_Tower",
+        text: "The Eiffel Tower is a wrought-iron lattice tower on the Champ de Mars in Paris, France.",
+        truthRating: "False"
+    },
+    {
+        claimReviewed: "Earth is the third planet from the Sun.",
+        source: "https://solarsystem.nasa.gov/planets/earth/overview/",
+        text: "Our home planet is the third planet from the Sun, and the only place we know of so far that’s inhabited by living things.",
+        truthRating: "True"
+    },
+    {
+        claimReviewed: "Water is composed of two hydrogen atoms and one oxygen atom.",
+        source: "https://www.usgs.gov/special-topics/water-science-school/science/water-qa-water-facts",
+        text: "A water molecule (H2O) is made of two hydrogen (H) atoms bonded to one oxygen (O) atom.",
+        truthRating: "True"
+    },
+    {
+        claimReviewed: "Siriraj Hospital is in Malaysia.",
+        source: "https://en.wikipedia.org/wiki/Siriraj_Hospital",
+        text: "Faculty of Medicine Siriraj Hospital, Mahidol University is the oldest and largest hospital in Thailand, located in Bangkok.",
+        truthRating: "False"
+    }
+];
+// ---------------------------------------------------------
+
+
 // Use CORS middleware to allow requests from your frontend
 app.use(cors({
     origin: '*' // Allows all origins for simplicity in this student project
@@ -28,7 +60,7 @@ app.post('/analyze', async (req, res) => {
     }
 
     try {
-        // Phase 4 (Simulated): Evidence Retrieval
+        // Phase 4 (Upgraded Simulation): Evidence Retrieval from In-Memory DB
         const evidence = findEvidence(claim);
 
         // Phase 5: Verification with Gemini
@@ -57,23 +89,30 @@ app.listen(port, () => {
 // --- Helper Functions ---
 
 /**
- * Phase 4 (Simulated): Finds mock evidence related to a claim.
+ * Phase 4 (Upgraded Simulation): Finds evidence by searching the in-memory database.
+ * This is a more realistic simulation of Evidence Retrieval.
  */
 function findEvidence(claim) {
     const lowerCaseClaim = claim.toLowerCase();
-    if (lowerCaseClaim.includes('siriraj') || lowerCaseClaim.includes('ศิริราช')) {
-        return {
-            supports: [],
-            contradicts: [
-                { source: 'https://www.si.mahidol.ac.th/', text: 'Siriraj Hospital is a hospital in Bangkok, Thailand, on the west bank of the Chao Phraya River.' },
-                { source: 'https://en.wikipedia.org/wiki/Siriraj_Hospital', text: 'Faculty of Medicine Siriraj Hospital, Mahidol University is the oldest and largest hospital in Thailand.' }
-            ]
-        };
-    }
-    return {
-        supports: [{ source: 'https://example.com', text: 'This is a generic piece of supporting evidence as no specific keywords were matched.' }],
-        contradicts: [{ source: 'https://example.com', text: 'This is a generic piece of contradicting evidence.' }]
-    };
+    const supports = [];
+    const contradicts = [];
+    
+    // Simple keyword matching search logic. A real system would use more advanced NLP techniques.
+    FACT_CHECK_DB.forEach(entry => {
+        // Check if any word from the claim appears in the database entry's text.
+        if (entry.claimReviewed.toLowerCase().includes(lowerCaseClaim) || lowerCaseClaim.includes(entry.claimReviewed.toLowerCase().split(" ")[2])) {
+            if (entry.truthRating === "True") {
+                supports.push({ source: entry.source, text: entry.text });
+            } else if (entry.truthRating === "False") {
+                contradicts.push({ source: entry.source, text: entry.text });
+            }
+        }
+    });
+
+    // If no specific evidence is found, return empty arrays.
+    // The frontend UI is responsible for checking if these arrays are empty
+    // and displaying a "No direct evidence found." message.
+    return { supports, contradicts };
 }
 
 
@@ -84,6 +123,12 @@ async function verifyWithGemini(claim, evidence) {
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
     // FINAL FIX: Using a model name confirmed to be available from your test script.
     const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-preview-05-20' });
+
+    // If both evidence arrays are empty, add a note to the prompt to inform Gemini.
+    let evidenceForPrompt = evidence;
+    if (evidence.supports.length === 0 && evidence.contradicts.length === 0) {
+        evidenceForPrompt = { ...evidence, notes: "No specific evidence was found in the local knowledge base. Please base your verdict on general knowledge." };
+    }
 
     const prompt = `
         Act as an expert fact-checker. Analyze the relationship between the 'claim' and the provided 'evidence'.
@@ -98,7 +143,7 @@ async function verifyWithGemini(claim, evidence) {
         ---
         Claim: "${claim}"
 
-        Evidence: ${JSON.stringify(evidence)}
+        Evidence: ${JSON.stringify(evidenceForPrompt)}
     `;
 
     try {
