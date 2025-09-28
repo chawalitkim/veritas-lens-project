@@ -159,9 +159,7 @@
         
         const feedbackButtons = document.getElementById('feedback-buttons');
         const feedbackThanks = document.getElementById('feedback-thanks');
-
-        // --- NEW: API Endpoint ---
-        // This is a placeholder. Replace with your actual backend API endpoint.
+        
         const API_ENDPOINT = "https://veritas-lens-project.onrender.com/analyze";
 
         // Enable button when user types
@@ -179,9 +177,6 @@
             }
         });
 
-        /**
-         * --- UPDATED: Calls a real backend API to fact-check the claim. ---
-         */
         async function analyzeClaim() {
             const claim = claimInput.value.trim();
             if (!claim) return;
@@ -197,9 +192,6 @@
             analyzeButton.disabled = true;
 
             try {
-                // NOTE: This fetch call is for demonstration. It will fail because the API_ENDPOINT is a placeholder.
-                // To test the UI, you can uncomment the 'mockFetch' line and comment out the 'fetch' line.
-                // const response = await mockFetch(claim); // For UI testing without a real backend
                 const response = await fetch(API_ENDPOINT, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -207,70 +199,33 @@
                 });
 
                 if (!response.ok) {
-                    throw new Error(`API Error: ${response.status} ${response.statusText}`);
+                    const errorData = await response.json().catch(() => ({ error: `API Error: ${response.status} ${response.statusText}` }));
+                    throw new Error(errorData.error);
                 }
 
                 const resultData = await response.json();
-                
                 displayResults(resultData);
 
             } catch (error) {
                 console.error("Analysis failed:", error);
-                showError("Analysis failed. The API endpoint might be unavailable. Please check the console for details.");
+                showError(`Analysis failed: ${error.message}`);
             } finally {
                 loadingSpinner.classList.add('hidden');
                 analyzeButton.disabled = false;
-                // Only show results/feedback if successful
-                if (!errorContainer.classList.contains('hidden')) {
-                     resultsContainer.classList.add('hidden');
-                } else {
+                 if (errorContainer.classList.contains('hidden')) {
                      resultsCard.classList.remove('hidden');
                      feedbackSection.classList.remove('hidden');
-                }
+                 } else {
+                    resultsContainer.classList.add('hidden');
+                 }
             }
         }
         
-        /**
-         * --- NEW: MOCK FETCH FOR UI TESTING ---
-         * This function simulates an API call and returns realistic data.
-         * You can use this for frontend development before your backend is ready.
-         */
-        function mockFetch(claim) {
-            console.log("Simulating API call for claim:", claim);
-            return new Promise((resolve) => {
-                const delay = Math.random() * 1500 + 1000;
-                setTimeout(() => {
-                    const mockData = {
-                        verdict: 'False',
-                        confidence: 95,
-                        summary: "The claim is rated 'False' because official sources state Siriraj Hospital is located in Bangkok, Thailand, not Malaysia.",
-                        supporting: [],
-                        contradicting: [
-                            { snippet: "Siriraj Hospital is a major public hospital in Bangkok, Thailand, located on the west bank of the Chao Phraya River.", source: "Siriraj Hospital Official Website", url: "#" },
-                            { snippet: "Founded in 1888, it is the oldest and one of the largest hospitals in Thailand.", source: "Wikipedia", url: "#" }
-                        ]
-                    };
-                    resolve({
-                        ok: true,
-                        json: () => Promise.resolve(mockData)
-                    });
-                }, delay);
-            });
-        }
-        
-        /**
-         * --- NEW: Displays an error message to the user. ---
-         */
         function showError(message) {
             errorText.textContent = message;
             errorContainer.classList.remove('hidden');
         }
 
-
-        /**
-         * Populates the UI with the analysis results.
-         * @param {object} data - The result data object.
-         */
         function displayResults(data) {
             verdictText.textContent = data.verdict;
             let iconHtml = '', iconBgClass = '', barBgClass = '';
@@ -302,30 +257,66 @@
 
             summaryText.textContent = data.summary;
 
-            populateList(supportingList, data.supporting);
-            populateList(contradictingList, data.contradicting);
+            // **UPDATED**: Use correct property names from the server
+            populateList(supportingList, data.supporting_evidence, "supporting");
+            populateList(contradictingList, data.contradicting_evidence, "contradicting");
         }
 
+        /**
+         * **NEW**: Creates an HTML list item for a piece of evidence, including its credibility badge.
+         * @param {object} item - The evidence object from the server.
+         * @returns {HTMLLIElement} The created list item element.
+         */
+        function createEvidenceItem(item) {
+            const li = document.createElement('li');
+            li.className = "bg-gray-900/50 p-3 rounded-md border border-gray-700 text-sm";
+            
+            // Determine badge color and text based on credibility
+            let credibilityColor = 'bg-gray-600'; // Default for missing or medium
+            let credibilityText = item.credibility || 'Medium';
+
+            if (item.credibility === 'High') {
+                credibilityColor = 'bg-green-600';
+            } else if (item.credibility === 'Low') {
+                credibilityColor = 'bg-red-600';
+            } else if (item.credibility === 'Medium') {
+                credibilityColor = 'bg-yellow-600';
+            }
+
+            li.innerHTML = `
+                <p class="text-gray-300">"${item.text}"</p>
+                <div class="flex flex-wrap items-center justify-between mt-2 text-xs gap-2">
+                    <a href="${item.source}" target="_blank" rel="noopener noreferrer" class="text-blue-400 hover:underline inline-flex items-center space-x-1 break-all">
+                        <span>Source</span>
+                        <i data-lucide="arrow-up-right" class="w-3 h-3"></i>
+                    </a>
+                    <span class="font-semibold text-white ${credibilityColor} px-2 py-0.5 rounded-full">${credibilityText} Credibility</span>
+                </div>
+            `;
+            return li;
+        }
+
+        /**
+         * **UPDATED**: Populates a list element with evidence items or a "not found" message.
+         * @param {HTMLUListElement} listElement - The <ul> element to populate.
+         * @param {Array} evidenceArray - The array of evidence objects.
+         */
         function populateList(listElement, evidenceArray) {
-            listElement.innerHTML = '';
+            listElement.innerHTML = ''; // Clear previous items
+            
             if (!evidenceArray || evidenceArray.length === 0) {
                 const li = document.createElement('li');
                 li.className = "text-gray-500 italic text-sm";
-                li.textContent = "No direct evidence found.";
+                // **UPDATED**: Specific message based on list type
+                const type = listElement.id.includes('supporting') ? 'supporting' : 'contradicting';
+                li.textContent = `No direct ${type} evidence found.`;
                 listElement.appendChild(li);
                 return;
             }
+
             evidenceArray.forEach(item => {
-                const li = document.createElement('li');
-                li.className = "bg-gray-900/50 p-3 rounded-md border border-gray-700 text-sm";
-                li.innerHTML = `
-                    <p class="text-gray-300">"${item.snippet}"</p>
-                    <a href="${item.url}" target="_blank" rel="noopener noreferrer" class="text-blue-400 hover:underline text-xs mt-2 inline-flex items-center space-x-1">
-                        <span>Source: ${item.source}</span>
-                        <i data-lucide="arrow-up-right" class="w-3 h-3"></i>
-                    </a>
-                `;
-                listElement.appendChild(li);
+                // **UPDATED**: Use the new helper function
+                listElement.appendChild(createEvidenceItem(item));
             });
             lucide.createIcons();
         }
@@ -334,4 +325,3 @@
 
 </body>
 </html>
-
