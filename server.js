@@ -6,37 +6,13 @@ const { GoogleGenerativeAI } = require('@google/generative-ai');
 const app = express();
 const port = process.env.PORT || 3000;
 
-// --- Phase 1 (Simulated): In-Memory Knowledge Base ---
-// In a real-world application, this data would come from a dedicated database (e.g., MongoDB, PostgreSQL)
-// which would be populated by downloading and parsing datasets from sources like datacommons.org.
-const FACT_CHECK_DB = [
-    {
-        claimReviewed: "The Eiffel Tower is located in Berlin.",
-        source: "https://en.wikipedia.org/wiki/Eiffel_Tower",
-        text: "The Eiffel Tower is a wrought-iron lattice tower on the Champ de Mars in Paris, France.",
-        truthRating: "False"
-    },
-    {
-        claimReviewed: "Earth is the third planet from the Sun.",
-        source: "https://solarsystem.nasa.gov/planets/earth/overview/",
-        text: "Our home planet is the third planet from the Sun, and the only place we know of so far that’s inhabited by living things.",
-        truthRating: "True"
-    },
-    {
-        claimReviewed: "Water is composed of two hydrogen atoms and one oxygen atom.",
-        source: "https://www.usgs.gov/special-topics/water-science-school/science/water-qa-water-facts",
-        text: "A water molecule (H2O) is made of two hydrogen (H) atoms bonded to one oxygen (O) atom.",
-        truthRating: "True"
-    },
-    {
-        claimReviewed: "Siriraj Hospital is in Malaysia.",
-        source: "https://en.wikipedia.org/wiki/Siriraj_Hospital",
-        text: "Faculty of Medicine Siriraj Hospital, Mahidol University is the oldest and largest hospital in Thailand, located in Bangkok.",
-        truthRating: "False"
-    }
+// NEW: A predefined list of high-credibility domains for source verification.
+const TRUSTED_DOMAINS = [
+    'reuters.com', 'apnews.com', 'bbc.com', 'nytimes.com', 'washingtonpost.com',
+    'wsj.com', 'theguardian.com', 'npr.org', 'pbs.org', 'forbes.com', 'bloomberg.com',
+    '.gov', '.edu', '.org', // Generic TLDs that are often credible
+    'wikipedia.org', 'nasa.gov', 'who.int', 'cdc.gov'
 ];
-// ---------------------------------------------------------
-
 
 // Use CORS middleware to allow requests from your frontend
 app.use(cors({
@@ -60,20 +36,23 @@ app.post('/analyze', async (req, res) => {
     }
 
     try {
-        // Phase 4 (Upgraded Simulation): Evidence Retrieval from In-Memory DB
-        const evidence = findEvidence(claim);
+        // Gemini handles evidence retrieval and initial verification.
+        let geminiResponse = await verifyWithGemini(claim);
 
-        // Phase 5: Verification with Gemini
-        const verificationResult = await verifyWithGemini(claim, evidence);
+        // NEW - Phase 5 Enhancement: Source Credibility Check
+        // We assess the credibility of each piece of evidence found by Gemini.
+        if (geminiResponse.supporting_evidence) {
+            geminiResponse.supporting_evidence.forEach(evidence => {
+                evidence.credibility = assessSourceCredibility(evidence.source);
+            });
+        }
+        if (geminiResponse.contradicting_evidence) {
+            geminiResponse.contradicting_evidence.forEach(evidence => {
+                evidence.credibility = assessSourceCredibility(evidence.source);
+            });
+        }
 
-        // Combine results and send back to frontend
-        const finalResponse = {
-            ...verificationResult,
-            supporting_evidence: evidence.supports,
-            contradicting_evidence: evidence.contradicts
-        };
-
-        res.json(finalResponse);
+        res.json(geminiResponse);
 
     } catch (error) {
         console.error('Error during analysis:', error);
@@ -89,61 +68,50 @@ app.listen(port, () => {
 // --- Helper Functions ---
 
 /**
- * Phase 4 (Upgraded Simulation): Finds evidence by searching the in-memory database.
- * This is a more realistic simulation of Evidence Retrieval.
+ * NEW - Phase 5 Enhancement: Assesses the credibility of a source URL.
+ * @param {string} url The URL of the evidence source.
+ * @returns {'High' | 'Medium' | 'Low'} A credibility rating.
  */
-function findEvidence(claim) {
-    const lowerCaseClaim = claim.toLowerCase();
-    const supports = [];
-    const contradicts = [];
-    
-    // Simple keyword matching search logic. A real system would use more advanced NLP techniques.
-    FACT_CHECK_DB.forEach(entry => {
-        // Check if any word from the claim appears in the database entry's text.
-        if (entry.claimReviewed.toLowerCase().includes(lowerCaseClaim) || lowerCaseClaim.includes(entry.claimReviewed.toLowerCase().split(" ")[2])) {
-            if (entry.truthRating === "True") {
-                supports.push({ source: entry.source, text: entry.text });
-            } else if (entry.truthRating === "False") {
-                contradicts.push({ source: entry.source, text: entry.text });
-            }
-        }
-    });
-
-    // If no specific evidence is found, return empty arrays.
-    // The frontend UI is responsible for checking if these arrays are empty
-    // and displaying a "No direct evidence found." message.
-    return { supports, contradicts };
+function assessSourceCredibility(url) {
+    if (!url) return 'Low';
+    try {
+        const domain = new URL(url).hostname;
+        const isTrusted = TRUSTED_DOMAINS.some(trustedDomain => domain.endsWith(trustedDomain));
+        return isTrusted ? 'High' : 'Medium';
+    } catch (error) {
+        // If the URL is malformed or cannot be parsed, rate it as low credibility.
+        return 'Low';
+    }
 }
 
 
 /**
- * Phase 5: Uses Google Gemini to verify the claim against the evidence.
+ * NEW & UPGRADED Phase 4, 5 & 6 Combined:
+ * Uses Google Gemini's search tool to find live evidence and verify the claim.
  */
-async function verifyWithGemini(claim, evidence) {
+async function verifyWithGemini(claim) {
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-    // FINAL FIX: Using a model name confirmed to be available from your test script.
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-preview-05-20' });
+    
+    const model = genAI.getGenerativeModel({ 
+        model: 'gemini-2.5-flash-preview-05-20',
+        tools: [{ "google_search": {} }],
+    });
 
-    // If both evidence arrays are empty, add a note to the prompt to inform Gemini.
-    let evidenceForPrompt = evidence;
-    if (evidence.supports.length === 0 && evidence.contradicts.length === 0) {
-        evidenceForPrompt = { ...evidence, notes: "No specific evidence was found in the local knowledge base. Please base your verdict on general knowledge." };
-    }
-
+    // The prompt is updated to be more stringent about source credibility.
     const prompt = `
-        Act as an expert fact-checker. Analyze the relationship between the 'claim' and the provided 'evidence'.
-        Determine if the evidence supports, contradicts, or is partially related to the claim.
+        You are an expert fact-checker. Your primary task is to verify the following claim by searching the web. 
+        Prioritize authoritative and globally recognized sources (major news outlets, academic institutions, government sites).
 
         Your response MUST be in a strict JSON format, with no extra text or markdown.
         The JSON object must have these exact keys:
         - "verdict": A string which can be "True", "False", or "Partially True".
         - "confidence": A number between 0 and 100.
-        - "summary": A single, concise sentence in the same language as the claim, explaining your reasoning.
+        - "summary": A single, concise sentence in the same language as the claim, explaining your reasoning based on the evidence found.
+        - "supporting_evidence": An array of objects found from your search that support the claim. Each object must have a "source" (URL) and "text" (a relevant quote). If none are found, provide an empty array.
+        - "contradicting_evidence": An array of objects found from your search that contradict the claim. Each object must have a "source" (URL) and "text" (a relevant quote). If none are found, provide an empty array.
 
         ---
-        Claim: "${claim}"
-
-        Evidence: ${JSON.stringify(evidenceForPrompt)}
+        Claim to verify: "${claim}"
     `;
 
     try {
@@ -152,7 +120,6 @@ async function verifyWithGemini(claim, evidence) {
         const text = response.text();
         
         const jsonString = text.replace(/```json/g, '').replace(/```/g, '').trim();
-        
         return JSON.parse(jsonString);
 
     } catch (error) {
