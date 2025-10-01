@@ -43,6 +43,10 @@
             25% { transform: translateX(-5px); }
             75% { transform: translateX(5px); }
         }
+        /* Style for rotating the chevron icon in the details summary */
+        details[open] > summary i {
+            transform: rotate(180deg);
+        }
     </style>
 </head>
 <body class="bg-gray-900 text-gray-200 flex items-center justify-center min-h-screen p-4">
@@ -55,6 +59,47 @@
             <p class="text-gray-400 mt-2">AI-Powered Fact-Checking for Academic Research</p>
         </div>
         
+        <!-- UPDATED: Introduction for Evaluators -->
+        <div id="introduction-section" class="bg-gray-900/50 p-4 rounded-md border border-gray-700 mb-6 fade-in">
+            <div class="flex">
+                <div class="flex-shrink-0">
+                    <i data-lucide="info" class="h-5 w-5 text-blue-400 mt-1"></i>
+                </div>
+                <div class="ml-3">
+                    <h3 class="text-sm font-medium text-blue-300">ยินดีต้อนรับผู้ประเมินทุกท่าน</h3>
+                    <div class="mt-2 text-sm text-gray-400 space-y-4">
+                        <p>ขอบคุณที่เข้าร่วมการประเมิน "Veritas Lens" ซึ่งเป็นระบบต้นแบบเพื่องานวิจัยที่ออกแบบมาเพื่อตรวจสอบข้อเท็จจริงโดยอัตโนมัติ</p>
+                        
+                        <div>
+                            <h4 class="font-semibold text-gray-200">วิธีการใช้งาน:</h4>
+                            <ul class="list-disc list-inside mt-1 space-y-1">
+                                <li><strong>ขั้นตอนที่ 1:</strong> วางข้อความที่เป็นข้อเท็จจริง (Claim) ที่ต้องการตรวจสอบลงในกล่องข้อความ</li>
+                                <li><strong>ขั้นตอนที่ 2:</strong> กดปุ่ม "Analyze Claim" และรอให้ AI ประมวลผล</li>
+                                <li><strong>ขั้นตอนที่ 3:</strong> ตรวจสอบผลลัพธ์ซึ่งประกอบด้วยคำตัดสิน, บทสรุป, และหลักฐานที่พบ</li>
+                            </ul>
+                        </div>
+
+                        <div>
+                            <h4 class="font-semibold text-gray-200">ระบบนี้ทำอะไรได้บ้าง:</h4>
+                            <ul class="list-disc list-inside mt-1 space-y-1">
+                                <li>ตรวจสอบความถูกต้องของข้อเท็จจริงอย่างรวดเร็ว</li>
+                                <li>ค้นหาหลักฐานสนับสนุนและโต้แย้งจากแหล่งข้อมูลบนอินเทอร์เน็ต</li>
+                                <li>ประเมินและแสดงระดับความน่าเชื่อถือของแหล่งข้อมูลที่พบ</li>
+                                <li>เป็นเครื่องมือช่วยในการประเมินข้อมูลเบื้องต้นสำหรับงานวิจัยเชิงวิชาการ</li>
+                            </ul>
+                        </div>
+                        <p>กรุณาทดสอบระบบด้วยข้อความที่หลากหลายและให้ความคิดเห็นของท่านผ่านแบบประเมิน เพื่อการพัฒนาระบบต่อไป</p>
+
+                    </div>
+                    <div class="mt-4">
+                        <button id="close-introduction" type="button" class="text-sm font-semibold text-blue-400 hover:text-blue-300">
+                            รับทราบและเริ่มใช้งาน
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Error Message Container -->
         <div id="error-container" class="hidden bg-red-900/50 border border-red-700 text-red-300 px-4 py-3 rounded-lg mb-4 text-sm fade-in error-message">
             <p id="error-text"></p>
@@ -63,7 +108,7 @@
         <!-- Input Section -->
         <div class="space-y-4">
             <label for="claim-input" class="sr-only">Enter a claim to analyze</label>
-            <textarea id="claim-input" rows="4" class="w-full bg-gray-900 border border-gray-700 rounded-lg p-4 text-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-200 placeholder-gray-500 resize-none" placeholder="Paste a claim in English or Thai... e.g., 'โรงพยาบาลศิริราชอยู่ในประเทศมาเลเซีย'"></textarea>
+            <textarea id="claim-input" rows="4" class="w-full bg-gray-900 border border-gray-700 rounded-lg p-4 text-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-200 placeholder-gray-500 resize-none" placeholder="วางข้อความที่ต้องการตรวจสอบที่นี่ (รองรับภาษาไทยและอังกฤษ) เช่น 'โรงพยาบาลศิริราชอยู่ในประเทศมาเลเซีย'"></textarea>
             <button id="analyze-button" class="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold py-3 px-4 rounded-lg flex items-center justify-center space-x-2 transition-all duration-300 transform hover:scale-105 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed" disabled>
                 <i data-lucide="scan-line"></i>
                 <span>Analyze Claim</span>
@@ -134,6 +179,26 @@
                 </div>
                 <p id="feedback-thanks" class="text-green-400 mt-4 hidden">Thank you for your feedback!</p>
             </div>
+            
+            <!-- "How It Works" Section -->
+            <div class="mt-8 text-left bg-gray-900/50 border border-gray-700 rounded-lg p-6 fade-in">
+                <details>
+                    <summary class="font-semibold text-gray-300 cursor-pointer hover:text-white transition-colors duration-200 flex items-center justify-between">
+                        <span>How This AI Fact-Checker Works (Based on the 6-Phase Research Framework)</span>
+                        <i data-lucide="chevron-down" class="w-5 h-5 transition-transform duration-300"></i>
+                    </summary>
+                    <div class="mt-4 space-y-4 text-gray-400 text-sm border-t border-gray-700 pt-4">
+                        <p>This system's methodology is grounded in a six-phase fact-checking process identified from academic literature. Here’s how your claim is processed:</p>
+                        <ol class="list-decimal list-inside space-y-3">
+                            <li><strong class="text-gray-200">Data Collection & Evidence Retrieval (Phase 1 & 4):</strong> When you submit a claim, the AI utilizes a powerful search tool to gather real-time evidence from a vast index of credible web sources, simulating the data collection and retrieval phases.</li>
+                            <li><strong class="text-gray-200">Preprocessing & Claim Detection (Phase 2 & 3):</strong> The AI internally processes your claim, normalizing it and identifying its core factual components to prepare for analysis. This happens automatically within the language model.</li>
+                            <li><strong class="text-gray-200">Verification (Phase 5):</strong> The AI critically compares the claim against the retrieved evidence, analyzing for corroboration and contradiction. This is the core verification step where relationships between claim and evidence are determined.</li>
+                            <li><strong class="text-gray-200">Reasoning & Source Assessment (Phase 6 & 5):</strong> Based on the verification, the AI generates a final verdict (True, False, Partially True), a confidence score, and a concise summary explaining its logic. It also assesses the credibility of the sources found to ensure transparency.</li>
+                        </ol>
+                    </div>
+                </details>
+            </div>
+            
         </div>
     </div>
 
@@ -148,6 +213,10 @@
         const feedbackSection = document.getElementById('feedback-section');
         const errorContainer = document.getElementById('error-container');
         const errorText = document.getElementById('error-text');
+
+        // NEW: Introduction elements
+        const introductionSection = document.getElementById('introduction-section');
+        const closeIntroductionButton = document.getElementById('close-introduction');
 
         const verdictIcon = document.getElementById('verdict-icon');
         const verdictText = document.getElementById('verdict-text');
@@ -168,6 +237,11 @@
         });
 
         analyzeButton.addEventListener('click', analyzeClaim);
+        
+        // NEW: Event listener to close the introduction
+        closeIntroductionButton.addEventListener('click', () => {
+            introductionSection.style.display = 'none';
+        });
         
         feedbackButtons.addEventListener('click', (e) => {
             if(e.target.classList.contains('feedback-btn')) {
@@ -212,11 +286,11 @@
             } finally {
                 loadingSpinner.classList.add('hidden');
                 analyzeButton.disabled = false;
-                 if (errorContainer.classList.contains('hidden')) {
+                 if (!errorContainer.classList.contains('hidden')) {
+                     resultsContainer.classList.add('hidden');
+                 } else {
                      resultsCard.classList.remove('hidden');
                      feedbackSection.classList.remove('hidden');
-                 } else {
-                    resultsContainer.classList.add('hidden');
                  }
             }
         }
@@ -256,23 +330,16 @@
             confidenceBar.className = `h-2 rounded-full ${barBgClass}`;
 
             summaryText.textContent = data.summary;
-
-            // **UPDATED**: Use correct property names from the server
-            populateList(supportingList, data.supporting_evidence, "supporting");
-            populateList(contradictingList, data.contradicting_evidence, "contradicting");
+            
+            populateList(supportingList, data.supporting_evidence);
+            populateList(contradictingList, data.contradicting_evidence);
         }
-
-        /**
-         * **NEW**: Creates an HTML list item for a piece of evidence, including its credibility badge.
-         * @param {object} item - The evidence object from the server.
-         * @returns {HTMLLIElement} The created list item element.
-         */
+        
         function createEvidenceItem(item) {
             const li = document.createElement('li');
             li.className = "bg-gray-900/50 p-3 rounded-md border border-gray-700 text-sm";
             
-            // Determine badge color and text based on credibility
-            let credibilityColor = 'bg-gray-600'; // Default for missing or medium
+            let credibilityColor = 'bg-gray-600';
             let credibilityText = item.credibility || 'Medium';
 
             if (item.credibility === 'High') {
@@ -282,32 +349,39 @@
             } else if (item.credibility === 'Medium') {
                 credibilityColor = 'bg-yellow-600';
             }
+            
+            let sourceElement = '';
+            if (item.source && item.source.includes('vertexaisearch.cloud.google.com')) {
+                sourceElement = `
+                    <span class="text-gray-500 inline-flex items-center space-x-1" title="This source is a temporary web search result from the AI and cannot be opened directly.">
+                        <span>Source: Web Search</span>
+                        <i data-lucide="search" class="w-3 h-3"></i>
+                    </span>`;
+            } else {
+                sourceElement = `
+                    <a href="${item.source}" target="_blank" rel="noopener noreferrer" class="text-blue-400 hover:underline inline-flex items-center space-x-1 break-all">
+                        <span>Source</span>
+                        <i data-lucide="arrow-up-right" class="w-3 h-3"></i>
+                    </a>`;
+            }
+
 
             li.innerHTML = `
                 <p class="text-gray-300">"${item.text}"</p>
                 <div class="flex flex-wrap items-center justify-between mt-2 text-xs gap-2">
-                    <a href="${item.source}" target="_blank" rel="noopener noreferrer" class="text-blue-400 hover:underline inline-flex items-center space-x-1 break-all">
-                        <span>Source</span>
-                        <i data-lucide="arrow-up-right" class="w-3 h-3"></i>
-                    </a>
+                    ${sourceElement}
                     <span class="font-semibold text-white ${credibilityColor} px-2 py-0.5 rounded-full">${credibilityText} Credibility</span>
                 </div>
             `;
             return li;
         }
 
-        /**
-         * **UPDATED**: Populates a list element with evidence items or a "not found" message.
-         * @param {HTMLUListElement} listElement - The <ul> element to populate.
-         * @param {Array} evidenceArray - The array of evidence objects.
-         */
         function populateList(listElement, evidenceArray) {
-            listElement.innerHTML = ''; // Clear previous items
+            listElement.innerHTML = ''; 
             
             if (!evidenceArray || evidenceArray.length === 0) {
                 const li = document.createElement('li');
                 li.className = "text-gray-500 italic text-sm";
-                // **UPDATED**: Specific message based on list type
                 const type = listElement.id.includes('supporting') ? 'supporting' : 'contradicting';
                 li.textContent = `No direct ${type} evidence found.`;
                 listElement.appendChild(li);
@@ -315,7 +389,6 @@
             }
 
             evidenceArray.forEach(item => {
-                // **UPDATED**: Use the new helper function
                 listElement.appendChild(createEvidenceItem(item));
             });
             lucide.createIcons();
