@@ -6,7 +6,7 @@ const { GoogleGenerativeAI } = require('@google/generative-ai');
 const app = express();
 const port = process.env.PORT || 3000;
 
-// NEW: A predefined list of high-credibility domains for source verification.
+// A predefined list of high-credibility domains for source verification.
 const TRUSTED_DOMAINS = [
     'reuters.com', 'apnews.com', 'bbc.com', 'nytimes.com', 'washingtonpost.com',
     'wsj.com', 'theguardian.com', 'npr.org', 'pbs.org', 'forbes.com', 'bloomberg.com',
@@ -36,11 +36,10 @@ app.post('/analyze', async (req, res) => {
     }
 
     try {
-        // Gemini handles evidence retrieval and initial verification.
+        // Gemini handles evidence retrieval and the new detailed verification.
         let geminiResponse = await verifyWithGemini(claim);
 
-        // NEW - Phase 5 Enhancement: Source Credibility Check
-        // We assess the credibility of each piece of evidence found by Gemini.
+        // Source Credibility Check remains the same
         if (geminiResponse.supporting_evidence) {
             geminiResponse.supporting_evidence.forEach(evidence => {
                 evidence.credibility = assessSourceCredibility(evidence.source);
@@ -67,11 +66,6 @@ app.listen(port, () => {
 
 // --- Helper Functions ---
 
-/**
- * NEW - Phase 5 Enhancement: Assesses the credibility of a source URL.
- * @param {string} url The URL of the evidence source.
- * @returns {'High' | 'Medium' | 'Low'} A credibility rating.
- */
 function assessSourceCredibility(url) {
     if (!url) return 'Low';
     try {
@@ -79,15 +73,13 @@ function assessSourceCredibility(url) {
         const isTrusted = TRUSTED_DOMAINS.some(trustedDomain => domain.endsWith(trustedDomain));
         return isTrusted ? 'High' : 'Medium';
     } catch (error) {
-        // If the URL is malformed or cannot be parsed, rate it as low credibility.
         return 'Low';
     }
 }
 
-
 /**
- * NEW & UPGRADED Phase 4, 5 & 6 Combined:
- * Uses Google Gemini's search tool to find live evidence and verify the claim.
+ * UPGRADED to handle sub-claim analysis.
+ * Uses Google Gemini's search tool to find live evidence and verify the claim in detail.
  */
 async function verifyWithGemini(claim) {
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
@@ -97,18 +89,24 @@ async function verifyWithGemini(claim) {
         tools: [{ "google_search": {} }],
     });
 
-    // The prompt is updated to be more stringent about source credibility.
+    // The prompt is now much more detailed, instructing the AI to break down the claim.
     const prompt = `
-        You are an expert fact-checker. Your primary task is to verify the following claim by searching the web. 
-        Prioritize authoritative and globally recognized sources (major news outlets, academic institutions, government sites).
+        You are a meticulous and expert fact-checker. Your task is to analyze the following claim in detail by searching the web for credible evidence.
+
+        Follow these steps:
+        1.  Deconstruct the main "Claim to verify" into individual, verifiable sub-claims.
+        2.  For each sub-claim, perform a web search to find evidence.
+        3.  Determine a verdict ("True", "False", or "Unverifiable") for each individual sub-claim based on the evidence.
+        4.  Based on the analysis of all sub-claims, provide an overall verdict for the main claim. For example, if any major sub-claim is false, the overall verdict is "False". If all are true, it's "True". If it's a mix of true and false significant parts, it's "Partially True".
 
         Your response MUST be in a strict JSON format, with no extra text or markdown.
         The JSON object must have these exact keys:
-        - "verdict": A string which can be "True", "False", or "Partially True".
-        - "confidence": A number between 0 and 100.
-        - "summary": A single, concise sentence in the same language as the claim, explaining your reasoning based on the evidence found.
-        - "supporting_evidence": An array of objects found from your search that support the claim. Each object must have a "source" (URL) and "text" (a relevant quote). If none are found, provide an empty array.
-        - "contradicting_evidence": An array of objects found from your search that contradict the claim. Each object must have a "source" (URL) and "text" (a relevant quote). If none are found, provide an empty array.
+        - "overall_verdict": A string ("True", "False", or "Partially True") for the entire claim.
+        - "overall_confidence": A number between 0 and 100 representing confidence in the overall verdict.
+        - "overall_summary": A single, concise sentence in the same language as the claim, explaining the final reasoning.
+        - "sub_claim_analysis": An array of objects. Each object must represent a sub-claim and have three keys: "sub_claim" (string), "verdict" (string), and "reasoning" (string). If the claim is simple and cannot be broken down, provide a single item in the array representing the main claim.
+        - "supporting_evidence": An array of objects found from your search that support ANY of the true sub-claims. Each object must have a "source" (URL) and "text" (a relevant quote). If none are found, provide an empty array.
+        - "contradicting_evidence": An array of objects found from your search that contradict ANY of the false sub-claims. Each object must have a "source" (URL) and "text" (a relevant quote). If none are found, provide an empty array.
 
         ---
         Claim to verify: "${claim}"
@@ -127,4 +125,3 @@ async function verifyWithGemini(claim) {
         throw new Error('Failed to get a valid response from the verification model.');
     }
 }
-
