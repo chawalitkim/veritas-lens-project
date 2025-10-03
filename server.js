@@ -10,36 +10,26 @@ const port = process.env.PORT || 3000;
 const TRUSTED_DOMAINS = [
     'reuters.com', 'apnews.com', 'bbc.com', 'nytimes.com', 'washingtonpost.com',
     'wsj.com', 'theguardian.com', 'npr.org', 'pbs.org', 'forbes.com', 'bloomberg.com',
-    '.gov', '.edu', '.org', // Generic TLDs that are often credible
-    'wikipedia.org', 'nasa.gov', 'who.int', 'cdc.gov'
+    '.gov', '.edu', // High-trust TLDs
+    'wikipedia.org', 'nasa.gov', 'who.int', 'cdc.gov', 'kmutnb.ac.th'
 ];
 
-// Use CORS middleware to allow requests from your frontend
-app.use(cors({
-    origin: '*' // Allows all origins for simplicity in this student project
-}));
-
+app.use(cors({ origin: '*' }));
 app.use(express.json());
 
-// A simple endpoint to confirm the server is running
 app.get('/', (req, res) => {
-  res.send('Veritas Lens AI Server is running!');
+  res.send('Veritas Lens AI Server is running! - v3 Final');
 });
 
-
-// The main analysis endpoint
 app.post('/analyze', async (req, res) => {
     const { claim } = req.body;
-
     if (!claim) {
-        return res.status(400).json({ error: 'Claim is required in the request body.' });
+        return res.status(400).json({ error: 'Claim is required.' });
     }
 
     try {
-        // Gemini handles evidence retrieval and the new detailed verification.
         let geminiResponse = await verifyWithGemini(claim);
 
-        // Source Credibility Check now uses source_url
         if (geminiResponse.supporting_evidence) {
             geminiResponse.supporting_evidence.forEach(evidence => {
                 evidence.credibility = assessSourceCredibility(evidence.source_url);
@@ -55,7 +45,7 @@ app.post('/analyze', async (req, res) => {
 
     } catch (error) {
         console.error('Error during analysis:', error);
-        res.status(500).json({ error: 'An internal server error occurred during analysis.' });
+        res.status(500).json({ error: 'An internal server error occurred.' });
     }
 });
 
@@ -63,23 +53,22 @@ app.listen(port, () => {
     console.log(`Veritas Lens AI Server is running at http://localhost:${port}`);
 });
 
-
-// --- Helper Functions ---
-
 function assessSourceCredibility(url) {
-    if (!url) return 'Low';
+    if (!url || url.includes('vertexaisearch.cloud.google.com')) return 'Medium';
     try {
-        const domain = new URL(url).hostname;
-        const isTrusted = TRUSTED_DOMAINS.some(trustedDomain => domain.endsWith(trustedDomain));
+        const domain = new URL(url).hostname.replace(/^www\./, '');
+        const isTrusted = TRUSTED_DOMAINS.some(trustedDomain => {
+            if (trustedDomain.startsWith('.')) {
+                return domain.endsWith(trustedDomain);
+            }
+            return domain === trustedDomain;
+        });
         return isTrusted ? 'High' : 'Medium';
     } catch (error) {
         return 'Low';
     }
 }
 
-/**
- * UPGRADED with more specific reasoning rules and a more detailed evidence structure.
- */
 async function verifyWithGemini(claim) {
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
     
@@ -88,27 +77,26 @@ async function verifyWithGemini(claim) {
         tools: [{ "google_search": {} }],
     });
 
+    // UPDATED PROMPT: More stringent instructions for source URLs and titles.
     const prompt = `
-        You are a meticulous and expert fact-checker. Your task is to analyze the following claim in detail by searching the web for credible evidence.
+        You are an expert fact-checker. Your task is to verify the following claim by searching the web for credible, authoritative sources.
 
-        CRITICAL INSTRUCTION: All text-based responses in the final JSON output (specifically "overall_summary" and "reasoning") MUST be in the same language as the original "Claim to verify". For example, if the claim is in Thai, all explanations must be in Thai.
+        CRITICAL INSTRUCTION: First, break down the main claim into smaller, verifiable sub-claims. For each sub-claim, determine its verdict ('True' or 'False') and provide a brief reasoning. Then, based on the sub-claim analysis, provide an 'overall_verdict'. If any significant sub-claim is 'False', the 'overall_verdict' must be 'Partially True' or 'False'. Only if all sub-claims are 'True' can the 'overall_verdict' be 'True'.
 
-        Follow these steps:
-        1. Deconstruct the main "Claim to verify" into individual, verifiable sub-claims.
-        2. For each sub-claim, perform a web search to find evidence.
-        3. Determine a verdict ("True", "False", or "Unverifiable") for each individual sub-claim based on the evidence.
-        4. Determine the "overall_verdict" based on the sub-claim analysis using these strict rules:
-            - If ALL sub-claims are "True", the overall_verdict is "True".
-            - CRITICALLY: If the main claim contains a mix of "True" and "False" sub-claims (e.g., one part about location is correct, but another part about its type is incorrect), the overall_verdict MUST be "Partially True". An "overall_verdict" of "False" should be reserved for claims that are entirely incorrect in their main assertion.
+        EVIDENCE REQUIREMENTS: For each piece of evidence you find, you MUST provide:
+        1.  "source_url": The final, public, and directly accessible URL of the webpage. DO NOT provide internal redirect URLs (like those from vertexaisearch.cloud.google.com). You must provide the destination URL.
+        2.  "source_title": The official title of the webpage from the source URL.
+        3.  "text": A direct, relevant quote from the source that serves as evidence.
 
-        Your response MUST be in a strict JSON format, with no extra text or markdown.
+        RESPONSE FORMAT: Your response MUST be in a strict JSON format, with no extra text or markdown. All textual output (summaries, reasoning) MUST be in the same language as the original claim.
+
         The JSON object must have these exact keys:
-        - "overall_verdict": A string ("True", "False", or "Partially True") for the entire claim.
-        - "overall_confidence": A number between 0 and 100 representing confidence in the overall verdict.
-        - "overall_summary": A single, concise sentence in the same language as the claim, explaining the final reasoning.
-        - "sub_claim_analysis": An array of objects. Each object must represent a sub-claim and have three keys: "sub_claim" (string), "verdict" (string), and "reasoning" (string, in the same language as the claim).
-        - "supporting_evidence": An array of objects. Each object must have "source_url" (a direct, clickable URL), "source_title" (the title of the source page), and "text" (a relevant quote). If none are found, provide an empty array.
-        - "contradicting_evidence": An array of objects. Each object must have "source_url" (a direct, clickable URL), "source_title" (the title of the source page), and "text" (a relevant quote). If none are found, provide an empty array.
+        - "overall_verdict": A string: "True", "False", or "Partially True".
+        - "overall_confidence": A number between 0 and 100.
+        - "overall_summary": A single, concise sentence explaining your overall reasoning.
+        - "sub_claim_analysis": An array of objects, where each object has "sub_claim" (string), "verdict" (string), and "reasoning" (string).
+        - "supporting_evidence": An array of evidence objects (with source_url, source_title, text) that support the claim.
+        - "contradicting_evidence": An array of evidence objects (with source_url, source_title, text) that contradict the claim.
 
         ---
         Claim to verify: "${claim}"
