@@ -161,7 +161,7 @@
                     <p id="summary-text" class="text-gray-300"></p>
                 </div>
 
-                <!-- NEW: Sub-Claim Analysis Section -->
+                <!-- Sub-Claim Analysis Section -->
                 <div id="sub-claim-section" class="mb-6">
                     <h3 data-lang-id="detailed-analysis-title" class="text-lg font-semibold text-gray-300 mb-3 border-b border-gray-700 pb-2"></h3>
                     <div id="sub-claim-list" class="space-y-3"></div>
@@ -213,38 +213,12 @@
     <script>
         lucide.createIcons();
 
-        // --- Element References ---
-        const analyzeButton = document.getElementById('analyze-button');
-        const clearButton = document.getElementById('clear-button');
-        const stopButton = document.getElementById('stop-button');
-        const buttonGroup = document.getElementById('button-group');
-        const claimInput = document.getElementById('claim-input');
-        const resultsContainer = document.getElementById('results-container');
-        const loadingSpinner = document.getElementById('loading-spinner');
-        const resultsCard = document.getElementById('results-card');
-        const feedbackSection = document.getElementById('feedback-section');
-        const errorContainer = document.getElementById('error-container');
-        const errorText = document.getElementById('error-text');
-        const introductionSection = document.getElementById('introduction-section');
-        const closeIntroductionButton = document.getElementById('close-introduction');
-        const verdictIcon = document.getElementById('verdict-icon');
-        const verdictText = document.getElementById('verdict-text');
-        const confidenceBar = document.getElementById('confidence-bar');
-        const confidenceText = document.getElementById('confidence-text');
-        const summaryText = document.getElementById('summary-text');
-        const subClaimList = document.getElementById('sub-claim-list');
-        const supportingList = document.getElementById('supporting-evidence-list');
-        const contradictingList = document.getElementById('contradicting-evidence-list');
-        const feedbackButtons = document.getElementById('feedback-buttons');
-        const feedbackThanks = document.getElementById('feedback-thanks');
-        const langThButton = document.getElementById('lang-th');
-        const langEnButton = document.getElementById('lang-en');
-        
-        // --- State & Constants ---
+        // --- Element References & State ---
         const API_ENDPOINT = "https://veritas-lens-project.onrender.com/analyze";
         let abortController = new AbortController();
+        let currentLang = 'th'; // Default language
 
-        // --- TRANSLATION LOGIC ---
+        // --- TRANSLATION DATA ---
         const translations = {
             en: {
                 "main-title": "An Educational Artificial Intelligence Fact-Checking System<br>to Enhance Students’ Righteousness and Digital Savvy",
@@ -272,13 +246,14 @@
                 "feedback-thanks-text": "Thank you for your feedback!",
                 "how-it-works-summary": "<span>How This AI Fact-Checker Works (Based on the 6-Phase Research Framework)</span><i data-lucide=\"chevron-down\" class=\"w-5 h-5 transition-transform duration-300\"></i>",
                 "how-it-works-p1": "This system's methodology is grounded in a six-phase fact-checking process identified from academic literature. Here’s how your claim is processed:",
-                "how-it-works-li1": `<strong class="text-gray-200">Data Collection & Evidence Retrieval (Phase 1 & 4):</strong> When you submit a claim, the AI utilizes a powerful search tool to gather real-time evidence from a vast index of credible web sources, simulating the data collection and retrieval phases.`,
-                "how-it-works-li2": `<strong class="text-gray-200">Preprocessing & Claim Detection (Phase 2 & 3):</strong> The AI internally processes your claim, normalizing it and identifying its core factual components to prepare for analysis. This happens automatically within the language model.`,
-                "how-it-works-li3": `<strong class="text-gray-200">Verification (Phase 5):</strong> The AI critically compares the claim against the retrieved evidence, analyzing for corroboration and contradiction. This is the core verification step where relationships between claim and evidence are determined.`,
-                "how-it-works-li4": `<strong class="text-gray-200">Reasoning & Source Assessment (Phase 6 & 5):</strong> Based on the verification, the AI generates a final verdict (True, False, Partially True), a confidence score, and a concise summary explaining its logic. It also assesses the credibility of the sources found to ensure transparency.`,
+                "how-it-works-li1": `<strong class="text-gray-200">Data Collection & Evidence Retrieval (Phase 1 & 4):</strong> When you submit a claim, the AI utilizes a powerful search tool to gather real-time evidence from a vast index of credible web sources.`,
+                "how-it-works-li2": `<strong class="text-gray-200">Preprocessing & Claim Detection (Phase 2 & 3):</strong> The AI internally processes your claim, normalizing it and identifying its core factual components for analysis.`,
+                "how-it-works-li3": `<strong class="text-gray-200">Verification (Phase 5):</strong> The AI critically compares the claim against the retrieved evidence, analyzing for corroboration and contradiction.`,
+                "how-it-works-li4": `<strong class="text-gray-200">Reasoning & Source Assessment (Phase 6 & 5):</strong> The AI generates a final verdict, a confidence score, and a concise summary explaining its logic. It also assesses the credibility of the sources found.`,
                 "confidence-label": "Confidence",
                 "no-evidence-supporting": "No direct supporting evidence found.",
-                "no-evidence-contradicting": "No direct contradicting evidence found."
+                "no-evidence-contradicting": "No direct contradicting evidence found.",
+                "source-title-fallback": "Source"
             },
             th: {
                 "main-title": "ระบบตรวจสอบข้อเท็จจริงปัญญาประดิษฐ์ทางการศึกษา<br>เพื่อส่งเสริมสัมมาทิฏฐิและการรู้ทันดิจิทัลของนักศึกษา",
@@ -286,7 +261,7 @@
                 "welcome-title": "ยินดีต้อนรับผู้ประเมินทุกท่าน",
                 "welcome-p1": "ขอบคุณที่เข้าร่วมการประเมิน \"ระบบตรวจสอบข้อเท็จจริงปัญญาประดิษฐ์ทางการศึกษาฯ\" ซึ่งเป็นระบบต้นแบบเพื่องานวิจัยที่ออกแบบมาเพื่อตรวจสอบข้อเท็จจริงโดยอัตโนมัติ",
                 "welcome-how-to-title": "วิธีการใช้งาน:",
-                "welcome-how-to-list": `<li><strong>ขั้นตอนที่ 1:</strong> วางข้อความที่เป็นข้อเท็จจริง (Claim) ที่ต้องการตรวจสอบลงในกล่องข้อความ</li><li><strong>ขั้นตอนที่ 2:</strong> กดปุ่ม "Analyze Claim" และรอให้ AI ประมวลผล</li><li><strong>ขั้นตอนที่ 3:</strong> ตรวจสอบผลลัพธ์ซึ่งประกอบด้วยคำตัดสิน, บทสรุป, และหลักฐานที่พบ</li>`,
+                "welcome-how-to-list": `<li><strong>ขั้นตอนที่ 1:</strong> วางข้อความที่เป็นข้อเท็จจริง (Claim) ที่ต้องการตรวจสอบลงในกล่องข้อความ</li><li><strong>ขั้นตอนที่ 2:</strong> กดปุ่ม "ตรวจสอบข้อเท็จจริง" และรอให้ AI ประมวลผล</li><li><strong>ขั้นตอนที่ 3:</strong> ตรวจสอบผลลัพธ์ซึ่งประกอบด้วยคำตัดสิน, บทสรุป, และหลักฐานที่พบ</li>`,
                 "welcome-what-can-title": "ระบบนี้ทำอะไรได้บ้าง:",
                 "welcome-what-can-list": `<li>ตรวจสอบความถูกต้องของข้อเท็จจริงอย่างรวดเร็ว</li><li>ค้นหาหลักฐานสนับสนุนและโต้แย้งจากแหล่งข้อมูลบนอินเทอร์เน็ต</li><li>ประเมินและแสดงระดับความน่าเชื่อถือของแหล่งข้อมูลที่พบ</li><li>เป็นเครื่องมือช่วยในการประเมินข้อมูลเบื้องต้นสำหรับงานวิจัยเชิงวิชาการ</li>`,
                 "welcome-p2": "กรุณาทดสอบระบบด้วยข้อความที่หลากหลายและให้ความคิดเห็นของท่านผ่านแบบประเมิน เพื่อการพัฒนาระบบต่อไป",
@@ -306,31 +281,72 @@
                 "feedback-thanks-text": "ขอบคุณสำหรับความคิดเห็น!",
                 "how-it-works-summary": "<span>ระบบตรวจสอบข้อเท็จจริงนี้ทำงานอย่างไร (ตามกรอบการวิจัย 6 ระยะ)</span><i data-lucide=\"chevron-down\" class=\"w-5 h-5 transition-transform duration-300\"></i>",
                 "how-it-works-p1": "ระเบียบวิธีของระบบนี้มีพื้นฐานมาจากกระบวนการตรวจสอบข้อเท็จจริง 6 ระยะที่ระบุไว้ในงานวิจัยทางวิชาการ นี่คือวิธีการประมวลผลข้อกล่าวอ้างของคุณ:",
-                "how-it-works-li1": `<strong class="text-gray-200">การรวบรวมข้อมูลและการเรียกค้นหลักฐาน (ระยะที่ 1 & 4):</strong> เมื่อคุณส่งข้อกล่าวอ้าง AI จะใช้เครื่องมือค้นหาที่ทรงพลังเพื่อรวบรวมหลักฐานแบบเรียลไทม์จากแหล่งข้อมูลบนเว็บที่น่าเชื่อถือจำนวนมาก ซึ่งเป็นการจำลองระยะการรวบรวมข้อมูลและการดึงข้อมูล`,
-                "how-it-works-li2": `<strong class="text-gray-200">การประมวลผลล่วงหน้าและการตรวจจับข้ออ้างอิง (ระยะที่ 2 & 3):</strong> AI จะประมวลผลข้อกล่าวอ้างของคุณภายใน ทำให้เป็นมาตรฐาน และระบุองค์ประกอบข้อเท็จจริงหลักเพื่อเตรียมพร้อมสำหรับการวิเคราะห์ สิ่งนี้จะเกิดขึ้นโดยอัตโนมัติภายในแบบจำลองภาษา`,
-                "how-it-works-li3": `<strong class="text-gray-200">การตรวจสอบ (ระยะที่ 5):</strong> AI จะเปรียบเทียบข้อกล่าวอ้างกับหลักฐานที่ค้นพบอย่างมีวิจารณญาณ วิเคราะห์เพื่อหาการยืนยันและการขัดแย้ง นี่คือขั้นตอนการตรวจสอบหลักซึ่งความสัมพันธ์ระหว่างข้อกล่าวอ้างและหลักฐานจะถูกกำหนด`,
-                "how-it-works-li4": `<strong class="text-gray-200">การให้เหตุผลและการประเมินแหล่งที่มา (ระยะที่ 6 & 5):</strong> จากการตรวจสอบ AI จะสร้างคำตัดสินสุดท้าย (จริง, เท็จ, จริงบางส่วน), คะแนนความเชื่อมั่น และบทสรุปที่กระชับซึ่งอธิบายตรรกะของมัน นอกจากนี้ยังประเมินความน่าเชื่อถือของแหล่งที่มาที่พบเพื่อความโปร่งใส`,
+                "how-it-works-li1": `<strong class="text-gray-200">การรวบรวมข้อมูลและการเรียกค้นหลักฐาน (ระยะที่ 1 & 4):</strong> เมื่อคุณส่งข้อกล่าวอ้าง AI จะใช้เครื่องมือค้นหาที่ทรงพลังเพื่อรวบรวมหลักฐานแบบเรียลไทม์จากแหล่งข้อมูลบนเว็บที่น่าเชื่อถือจำนวนมาก`,
+                "how-it-works-li2": `<strong class="text-gray-200">การประมวลผลล่วงหน้าและการตรวจจับข้ออ้างอิง (ระยะที่ 2 & 3):</strong> AI จะประมวลผลข้อกล่าวอ้างของคุณภายใน ทำให้เป็นมาตรฐาน และระบุองค์ประกอบข้อเท็จจริงหลักเพื่อเตรียมพร้อมสำหรับการวิเคราะห์`,
+                "how-it-works-li3": `<strong class="text-gray-200">การตรวจสอบ (ระยะที่ 5):</strong> AI จะเปรียบเทียบข้อกล่าวอ้างกับหลักฐานที่ค้นพบอย่างมีวิจารณญาณ วิเคราะห์เพื่อหาการยืนยันและการขัดแย้ง`,
+                "how-it-works-li4": `<strong class="text-gray-200">การให้เหตุผลและการประเมินแหล่งที่มา (ระยะที่ 6 & 5):</strong> AI จะสร้างคำตัดสินสุดท้าย, คะแนนความเชื่อมั่น และบทสรุปที่กระชับซึ่งอธิบายตรรกะของมัน นอกจากนี้ยังประเมินความน่าเชื่อถือของแหล่งที่มาที่พบ`,
                 "confidence-label": "ความเชื่อมั่น",
                 "no-evidence-supporting": "ไม่พบหลักฐานสนับสนุนโดยตรง",
-                "no-evidence-contradicting": "ไม่พบหลักฐานโต้แย้งโดยตรง"
+                "no-evidence-contradicting": "ไม่พบหลักฐานโต้แย้งโดยตรง",
+                "source-title-fallback": "แหล่งที่มา"
             }
         };
+        
+        // --- Event Listeners & Initial Setup ---
+        document.addEventListener('DOMContentLoaded', () => {
+            // Element references that need to be inside this event
+            const langThButton = document.getElementById('lang-th');
+            const langEnButton = document.getElementById('lang-en');
+            const claimInput = document.getElementById('claim-input');
+            const analyzeButton = document.getElementById('analyze-button');
+            const clearButton = document.getElementById('clear-button');
+            const stopButton = document.getElementById('stop-button');
+            const closeIntroductionButton = document.getElementById('close-introduction');
+            const feedbackButtons = document.getElementById('feedback-buttons');
 
-        let currentLang = 'th'; // Default language
+            // Attach event listeners
+            claimInput.addEventListener('input', () => {
+                analyzeButton.disabled = claimInput.value.trim() === '';
+            });
 
+            analyzeButton.addEventListener('click', analyzeClaim);
+            clearButton.addEventListener('click', clearAll);
+            stopButton.addEventListener('click', stopAnalysis);
+            closeIntroductionButton.addEventListener('click', () => {
+                document.getElementById('introduction-section').style.display = 'none';
+            });
+            
+            langThButton.addEventListener('click', () => setLanguage('th'));
+            langEnButton.addEventListener('click', () => setLanguage('en'));
+            
+            feedbackButtons.addEventListener('click', (e) => {
+                if(e.target.classList.contains('feedback-btn')) {
+                    const feedbackThanks = document.getElementById('feedback-thanks');
+                    feedbackButtons.classList.add('hidden');
+                    feedbackThanks.classList.remove('hidden');
+                    setTimeout(() => {
+                        clearAll();
+                        feedbackButtons.classList.remove('hidden');
+                        feedbackThanks.classList.add('hidden');
+                    }, 1500);
+                }
+            });
+            
+            // Set default language
+            setLanguage('th'); 
+        });
+
+        // --- Core Functions ---
         function setLanguage(lang) {
             currentLang = lang;
             const langStrings = translations[lang];
-
-            // Set text for elements with IDs
-            for (const id in langStrings) {
-                 const element = document.getElementById(id);
-                 if (element) {
-                    element.innerHTML = langStrings[id];
-                 }
-            }
             
-            // Set text for elements with data-lang-id attributes
+            document.querySelectorAll('[id^="main-"], [id^="welcome-"], [id^="how-it-works-"]').forEach(element => {
+                if (langStrings[element.id]) {
+                     element.innerHTML = langStrings[element.id];
+                }
+            });
+            
             document.querySelectorAll('[data-lang-id]').forEach(element => {
                 const key = element.getAttribute('data-lang-id');
                 if (langStrings[key]) {
@@ -338,10 +354,10 @@
                 }
             });
             
-            // Set placeholder text
-            claimInput.placeholder = langStrings["claim-input-placeholder"];
+            document.getElementById('claim-input').placeholder = langStrings["claim-input-placeholder"];
 
-            // Update button styles
+            const langThButton = document.getElementById('lang-th');
+            const langEnButton = document.getElementById('lang-en');
             if (lang === 'th') {
                 langThButton.classList.add('active');
                 langEnButton.classList.remove('active');
@@ -349,47 +365,18 @@
                 langEnButton.classList.add('active');
                 langThButton.classList.remove('active');
             }
-
-            // Re-initialize Lucide icons since we're changing innerHTML
             lucide.createIcons();
         }
 
-        // --- Event Listeners ---
-        claimInput.addEventListener('input', () => {
-            analyzeButton.disabled = claimInput.value.trim() === '';
-        });
-
-        analyzeButton.addEventListener('click', analyzeClaim);
-        clearButton.addEventListener('click', clearAll);
-        stopButton.addEventListener('click', stopAnalysis);
-        closeIntroductionButton.addEventListener('click', () => {
-            introductionSection.style.display = 'none';
-        });
-        
-        langThButton.addEventListener('click', () => setLanguage('th'));
-        langEnButton.addEventListener('click', () => setLanguage('en'));
-        
-        feedbackButtons.addEventListener('click', (e) => {
-            if(e.target.classList.contains('feedback-btn')) {
-                feedbackButtons.classList.add('hidden');
-                feedbackThanks.classList.remove('hidden');
-                setTimeout(() => {
-                    clearAll();
-                    feedbackButtons.classList.remove('hidden');
-                    feedbackThanks.classList.add('hidden');
-                }, 1500);
-            }
-        });
-
-        // --- Core Functions ---
         async function analyzeClaim() {
+            const claimInput = document.getElementById('claim-input');
             const claim = claimInput.value.trim();
             if (!claim) return;
             resetUIState();
-            resultsContainer.classList.remove('hidden');
-            loadingSpinner.classList.remove('hidden');
-            buttonGroup.classList.add('hidden');
-            stopButton.classList.remove('hidden');
+            document.getElementById('results-container').classList.remove('hidden');
+            document.getElementById('loading-spinner').classList.remove('hidden');
+            document.getElementById('button-group').classList.add('hidden');
+            document.getElementById('stop-button').classList.remove('hidden');
             abortController = new AbortController();
 
             try {
@@ -417,14 +404,14 @@
                     showError(`Analysis failed: ${error.message}`);
                 }
             } finally {
-                loadingSpinner.classList.add('hidden');
-                stopButton.classList.add('hidden');
-                buttonGroup.classList.remove('hidden');
-                 if (!errorContainer.classList.contains('hidden')) {
-                     resultsContainer.classList.add('hidden');
+                document.getElementById('loading-spinner').classList.add('hidden');
+                document.getElementById('stop-button').classList.add('hidden');
+                document.getElementById('button-group').classList.remove('hidden');
+                 if (!document.getElementById('error-container').classList.contains('hidden')) {
+                     document.getElementById('results-container').classList.add('hidden');
                  } else {
-                     resultsCard.classList.remove('hidden');
-                     feedbackSection.classList.remove('hidden');
+                     document.getElementById('results-card').classList.remove('hidden');
+                     document.getElementById('feedback-section').classList.remove('hidden');
                  }
             }
         }
@@ -436,29 +423,38 @@
         }
         
         function clearAll() {
-            claimInput.value = '';
-            analyzeButton.disabled = true;
+            document.getElementById('claim-input').value = '';
+            document.getElementById('analyze-button').disabled = true;
             resetUIState(true);
         }
 
         function resetUIState(isFullReset = false) {
-             resultsCard.classList.add('hidden');
-             feedbackSection.classList.add('hidden');
-             errorContainer.classList.add('hidden');
-             resultsContainer.classList.add('hidden');
+             document.getElementById('results-card').classList.add('hidden');
+             document.getElementById('feedback-section').classList.add('hidden');
+             document.getElementById('error-container').classList.add('hidden');
+             document.getElementById('results-container').classList.add('hidden');
              if(isFullReset) {
-                loadingSpinner.classList.add('hidden');
-                stopButton.classList.add('hidden');
-                buttonGroup.classList.remove('hidden');
+                document.getElementById('loading-spinner').classList.add('hidden');
+                document.getElementById('stop-button').classList.add('hidden');
+                document.getElementById('button-group').classList.remove('hidden');
              }
         }
 
         function showError(message) {
-            errorText.textContent = message;
-            errorContainer.classList.remove('hidden');
+            document.getElementById('error-text').textContent = message;
+            document.getElementById('error-container').classList.remove('hidden');
         }
 
         function displayResults(data) {
+            const verdictText = document.getElementById('verdict-text');
+            const verdictIcon = document.getElementById('verdict-icon');
+            const confidenceText = document.getElementById('confidence-text');
+            const confidenceBar = document.getElementById('confidence-bar');
+            const summaryText = document.getElementById('summary-text');
+            const subClaimList = document.getElementById('sub-claim-list');
+            const supportingList = document.getElementById('supporting-evidence-list');
+            const contradictingList = document.getElementById('contradicting-evidence-list');
+
             verdictText.textContent = data.overall_verdict;
             let iconHtml = '', iconBgClass = '', barBgClass = '';
             switch (data.overall_verdict) {
@@ -489,9 +485,12 @@
             
             subClaimList.innerHTML = '';
             if(data.sub_claim_analysis && data.sub_claim_analysis.length > 0) {
+                document.getElementById('sub-claim-section').classList.remove('hidden');
                 data.sub_claim_analysis.forEach(item => {
                     subClaimList.appendChild(createSubClaimItem(item));
                 });
+            } else {
+                 document.getElementById('sub-claim-section').classList.add('hidden');
             }
 
             populateList(supportingList, data.supporting_evidence);
@@ -515,7 +514,6 @@
                      iconHtml = '<i data-lucide="help-circle" class="w-5 h-5"></i>';
                      iconColor = 'text-yellow-400';
             }
-
             div.innerHTML = `<div class="flex-shrink-0 ${iconColor} pt-0.5">${iconHtml}</div><div><p class="font-semibold text-gray-200">${item.sub_claim}</p><p class="text-gray-400">${item.reasoning}</p></div>`;
             lucide.createIcons();
             return div;
@@ -527,19 +525,16 @@
             let credibilityColor = 'bg-gray-600';
             let credibilityText = item.credibility || 'Medium';
 
-            if (item.credibility === 'High') {
-                credibilityColor = 'bg-green-600';
-            } else if (item.credibility === 'Low') {
-                credibilityColor = 'bg-red-600';
-            } else if (item.credibility === 'Medium') {
-                credibilityColor = 'bg-yellow-600';
-            }
+            if (item.credibility === 'High') credibilityColor = 'bg-green-600';
+            else if (item.credibility === 'Low') credibilityColor = 'bg-red-600';
+            else if (item.credibility === 'Medium') credibilityColor = 'bg-yellow-600';
             
             let sourceElement = '';
-            if (item.source && item.source.includes('vertexaisearch.cloud.google.com')) {
+            const fallbackTitle = translations[currentLang]['source-title-fallback'];
+            if (item.source_url && item.source_url.includes('vertexaisearch.cloud.google.com')) {
                 sourceElement = `<span class="text-gray-500 inline-flex items-center space-x-1" title="This source is a temporary web search result from the AI and cannot be opened directly."><span>Source: Web Search</span><i data-lucide="search" class="w-3 h-3"></i></span>`;
-            } else {
-                sourceElement = `<a href="${item.source}" target="_blank" rel="noopener noreferrer" class="text-blue-400 hover:underline inline-flex items-center space-x-1 break-all"><span>Source</span><i data-lucide="arrow-up-right" class="w-3 h-3"></i></a>`;
+            } else if (item.source_url) {
+                sourceElement = `<a href="${item.source_url}" target="_blank" rel="noopener noreferrer" class="text-blue-400 hover:underline inline-flex items-center space-x-1 break-all" title="${item.source_url}"><span>${item.source_title || fallbackTitle}</span><i data-lucide="arrow-up-right" class="w-3 h-3"></i></a>`;
             }
 
             li.innerHTML = `<p class="text-gray-300">"${item.text}"</p><div class="flex flex-wrap items-center justify-between mt-2 text-xs gap-2">${sourceElement}<span class="font-semibold text-white ${credibilityColor} px-2 py-0.5 rounded-full">${credibilityText} Credibility</span></div>`;
@@ -561,12 +556,6 @@
             });
             lucide.createIcons();
         }
-        
-        // Initial setup on page load
-        document.addEventListener('DOMContentLoaded', () => {
-            setLanguage('th'); // Set default language to Thai
-        });
-
     </script>
 
 </body>

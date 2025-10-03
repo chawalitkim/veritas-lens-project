@@ -39,15 +39,15 @@ app.post('/analyze', async (req, res) => {
         // Gemini handles evidence retrieval and the new detailed verification.
         let geminiResponse = await verifyWithGemini(claim);
 
-        // Source Credibility Check remains the same
+        // Source Credibility Check now uses source_url
         if (geminiResponse.supporting_evidence) {
             geminiResponse.supporting_evidence.forEach(evidence => {
-                evidence.credibility = assessSourceCredibility(evidence.source);
+                evidence.credibility = assessSourceCredibility(evidence.source_url);
             });
         }
         if (geminiResponse.contradicting_evidence) {
             geminiResponse.contradicting_evidence.forEach(evidence => {
-                evidence.credibility = assessSourceCredibility(evidence.source);
+                evidence.credibility = assessSourceCredibility(evidence.source_url);
             });
         }
 
@@ -78,7 +78,7 @@ function assessSourceCredibility(url) {
 }
 
 /**
- * UPGRADED with more specific reasoning rules for the overall verdict.
+ * UPGRADED with more specific reasoning rules and a more detailed evidence structure.
  */
 async function verifyWithGemini(claim) {
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
@@ -99,8 +99,7 @@ async function verifyWithGemini(claim) {
         3. Determine a verdict ("True", "False", or "Unverifiable") for each individual sub-claim based on the evidence.
         4. Determine the "overall_verdict" based on the sub-claim analysis using these strict rules:
             - If ALL sub-claims are "True", the overall_verdict is "True".
-            - If ANY single significant sub-claim is "False", the overall_verdict becomes either "False" or "Partially True".
-            - CRITICALLY: If the main claim contains a mix of "True" and "False" sub-claims (e.g., one part about location is correct, but another part about its type is incorrect), the overall_verdict MUST be "Partially True". This rule is paramount for mixed results. An "overall_verdict" of "False" should be reserved for claims that are entirely incorrect in their main assertion.
+            - CRITICALLY: If the main claim contains a mix of "True" and "False" sub-claims (e.g., one part about location is correct, but another part about its type is incorrect), the overall_verdict MUST be "Partially True". An "overall_verdict" of "False" should be reserved for claims that are entirely incorrect in their main assertion.
 
         Your response MUST be in a strict JSON format, with no extra text or markdown.
         The JSON object must have these exact keys:
@@ -108,8 +107,8 @@ async function verifyWithGemini(claim) {
         - "overall_confidence": A number between 0 and 100 representing confidence in the overall verdict.
         - "overall_summary": A single, concise sentence in the same language as the claim, explaining the final reasoning.
         - "sub_claim_analysis": An array of objects. Each object must represent a sub-claim and have three keys: "sub_claim" (string), "verdict" (string), and "reasoning" (string, in the same language as the claim).
-        - "supporting_evidence": An array of objects found from your search that support ANY of the true sub-claims. Each object must have "source" (URL) and "text" (a relevant quote). If none are found, provide an empty array.
-        - "contradicting_evidence": An array of objects found from your search that contradict ANY of the false sub-claims. Each object must have "source" (URL) and "text" (a relevant quote). If none are found, provide an empty array.
+        - "supporting_evidence": An array of objects. Each object must have "source_url" (a direct, clickable URL), "source_title" (the title of the source page), and "text" (a relevant quote). If none are found, provide an empty array.
+        - "contradicting_evidence": An array of objects. Each object must have "source_url" (a direct, clickable URL), "source_title" (the title of the source page), and "text" (a relevant quote). If none are found, provide an empty array.
 
         ---
         Claim to verify: "${claim}"
