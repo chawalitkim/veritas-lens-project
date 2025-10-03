@@ -98,6 +98,8 @@ async function verifyWithGemini(claim) {
         - "supporting_evidence": An array of evidence objects (with source_url, source_title, text) that support the claim.
         - "contradicting_evidence": An array of evidence objects (with source_url, source_title, text) that contradict the claim.
 
+        FINAL LANGUAGE CHECK: Ensure all string values in the JSON output ("overall_summary", "reasoning", "sub_claim") are written in the same language as the original 'Claim to verify'.
+
         ---
         Claim to verify: "${claim}"
     `;
