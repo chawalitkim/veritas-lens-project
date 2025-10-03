@@ -77,16 +77,20 @@ async function verifyWithGemini(claim) {
         tools: [{ "google_search": {} }],
     });
 
-    // UPDATED PROMPT: More stringent instructions for source URLs and titles.
+    // UPDATED PROMPT: Added explicit examples of good and bad URLs.
     const prompt = `
         You are an expert fact-checker. Your task is to verify the following claim by searching the web for credible, authoritative sources.
 
         CRITICAL INSTRUCTION: First, break down the main claim into smaller, verifiable sub-claims. For each sub-claim, determine its verdict ('True' or 'False') and provide a brief reasoning. Then, based on the sub-claim analysis, provide an 'overall_verdict'. If any significant sub-claim is 'False', the 'overall_verdict' must be 'Partially True' or 'False'. Only if all sub-claims are 'True' can the 'overall_verdict' be 'True'.
 
         EVIDENCE REQUIREMENTS: For each piece of evidence you find, you MUST provide:
-        1.  "source_url": The final, public, and directly accessible URL of the webpage. DO NOT provide internal redirect URLs (like those from vertexaisearch.cloud.google.com). You must provide the destination URL.
+        1.  "source_url": The final, public, and directly accessible URL of the webpage. This is the most critical requirement.
         2.  "source_title": The official title of the webpage from the source URL.
         3.  "text": A direct, relevant quote from the source that serves as evidence.
+
+        URL POLICY: You MUST provide the final destination URL.
+        - BAD EXAMPLE (DO NOT DO THIS): "source_url": "https://vertexaisearch.cloud.google.com/..."
+        - GOOD EXAMPLE (DO THIS): "source_url": "https://en.wikipedia.org/wiki/History_of_Thailand"
 
         RESPONSE FORMAT: Your response MUST be in a strict JSON format, with no extra text or markdown. All textual output (summaries, reasoning) MUST be in the same language as the original claim.
 
