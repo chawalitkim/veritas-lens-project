@@ -78,8 +78,7 @@ function assessSourceCredibility(url) {
 }
 
 /**
- * UPGRADED to handle sub-claim analysis and enforce language consistency.
- * Uses Google Gemini's search tool to find live evidence and verify the claim in detail.
+ * UPGRADED with more specific reasoning rules for the overall verdict.
  */
 async function verifyWithGemini(claim) {
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
@@ -89,26 +88,28 @@ async function verifyWithGemini(claim) {
         tools: [{ "google_search": {} }],
     });
 
-    // The prompt is now much more detailed, instructing the AI to break down the claim and enforce language consistency.
     const prompt = `
         You are a meticulous and expert fact-checker. Your task is to analyze the following claim in detail by searching the web for credible evidence.
 
         CRITICAL INSTRUCTION: All text-based responses in the final JSON output (specifically "overall_summary" and "reasoning") MUST be in the same language as the original "Claim to verify". For example, if the claim is in Thai, all explanations must be in Thai.
 
         Follow these steps:
-        1.  Deconstruct the main "Claim to verify" into individual, verifiable sub-claims.
-        2.  For each sub-claim, perform a web search to find evidence.
-        3.  Determine a verdict ("True", "False", or "Unverifiable") for each individual sub-claim based on the evidence.
-        4.  Based on the analysis of all sub-claims, provide an overall verdict for the main claim. For example, if any major sub-claim is false, the overall verdict is "False". If all are true, it's "True". If it's a mix of true and false significant parts, it's "Partially True".
+        1. Deconstruct the main "Claim to verify" into individual, verifiable sub-claims.
+        2. For each sub-claim, perform a web search to find evidence.
+        3. Determine a verdict ("True", "False", or "Unverifiable") for each individual sub-claim based on the evidence.
+        4. Determine the "overall_verdict" based on the sub-claim analysis using these strict rules:
+            - If ALL sub-claims are "True", the overall_verdict is "True".
+            - If ANY single significant sub-claim is "False", the overall_verdict becomes either "False" or "Partially True".
+            - CRITICALLY: If the main claim contains a mix of "True" and "False" sub-claims (e.g., one part about location is correct, but another part about its type is incorrect), the overall_verdict MUST be "Partially True". This rule is paramount for mixed results. An "overall_verdict" of "False" should be reserved for claims that are entirely incorrect in their main assertion.
 
         Your response MUST be in a strict JSON format, with no extra text or markdown.
         The JSON object must have these exact keys:
         - "overall_verdict": A string ("True", "False", or "Partially True") for the entire claim.
         - "overall_confidence": A number between 0 and 100 representing confidence in the overall verdict.
         - "overall_summary": A single, concise sentence in the same language as the claim, explaining the final reasoning.
-        - "sub_claim_analysis": An array of objects. Each object must represent a sub-claim and have three keys: "sub_claim" (string), "verdict" (string), and "reasoning" (string, in the same language as the claim). If the claim is simple and cannot be broken down, provide a single item in the array representing the main claim.
-        - "supporting_evidence": An array of objects found from your search that support ANY of the true sub-claims. Each object must have a "source" (URL) and "text" (a relevant quote). If none are found, provide an empty array.
-        - "contradicting_evidence": An array of objects found from your search that contradict ANY of the false sub-claims. Each object must have a "source" (URL) and "text" (a relevant quote). If none are found, provide an empty array.
+        - "sub_claim_analysis": An array of objects. Each object must represent a sub-claim and have three keys: "sub_claim" (string), "verdict" (string), and "reasoning" (string, in the same language as the claim).
+        - "supporting_evidence": An array of objects found from your search that support ANY of the true sub-claims. Each object must have "source" (URL) and "text" (a relevant quote). If none are found, provide an empty array.
+        - "contradicting_evidence": An array of objects found from your search that contradict ANY of the false sub-claims. Each object must have "source" (URL) and "text" (a relevant quote). If none are found, provide an empty array.
 
         ---
         Claim to verify: "${claim}"
