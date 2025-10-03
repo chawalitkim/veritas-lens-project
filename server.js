@@ -78,7 +78,7 @@ function assessSourceCredibility(url) {
 }
 
 /**
- * UPGRADED to handle sub-claim analysis.
+ * UPGRADED to handle sub-claim analysis and enforce language consistency.
  * Uses Google Gemini's search tool to find live evidence and verify the claim in detail.
  */
 async function verifyWithGemini(claim) {
@@ -89,9 +89,11 @@ async function verifyWithGemini(claim) {
         tools: [{ "google_search": {} }],
     });
 
-    // The prompt is now much more detailed, instructing the AI to break down the claim.
+    // The prompt is now much more detailed, instructing the AI to break down the claim and enforce language consistency.
     const prompt = `
         You are a meticulous and expert fact-checker. Your task is to analyze the following claim in detail by searching the web for credible evidence.
+
+        CRITICAL INSTRUCTION: All text-based responses in the final JSON output (specifically "overall_summary" and "reasoning") MUST be in the same language as the original "Claim to verify". For example, if the claim is in Thai, all explanations must be in Thai.
 
         Follow these steps:
         1.  Deconstruct the main "Claim to verify" into individual, verifiable sub-claims.
@@ -104,7 +106,7 @@ async function verifyWithGemini(claim) {
         - "overall_verdict": A string ("True", "False", or "Partially True") for the entire claim.
         - "overall_confidence": A number between 0 and 100 representing confidence in the overall verdict.
         - "overall_summary": A single, concise sentence in the same language as the claim, explaining the final reasoning.
-        - "sub_claim_analysis": An array of objects. Each object must represent a sub-claim and have three keys: "sub_claim" (string), "verdict" (string), and "reasoning" (string). If the claim is simple and cannot be broken down, provide a single item in the array representing the main claim.
+        - "sub_claim_analysis": An array of objects. Each object must represent a sub-claim and have three keys: "sub_claim" (string), "verdict" (string), and "reasoning" (string, in the same language as the claim). If the claim is simple and cannot be broken down, provide a single item in the array representing the main claim.
         - "supporting_evidence": An array of objects found from your search that support ANY of the true sub-claims. Each object must have a "source" (URL) and "text" (a relevant quote). If none are found, provide an empty array.
         - "contradicting_evidence": An array of objects found from your search that contradict ANY of the false sub-claims. Each object must have a "source" (URL) and "text" (a relevant quote). If none are found, provide an empty array.
 
@@ -125,3 +127,4 @@ async function verifyWithGemini(claim) {
         throw new Error('Failed to get a valid response from the verification model.');
     }
 }
+
