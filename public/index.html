@@ -7,12 +7,12 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
 
     <style>
         body {
-            font-family: 'Inter', sans-serif;
+            font-family: 'Inter', 'Sarabun', sans-serif;
         }
         .fade-in {
             animation: fadeIn 0.5s ease-in-out;
@@ -47,17 +47,27 @@
         details[open] > summary i {
             transform: rotate(180deg);
         }
+        .lang-btn.active {
+            background-color: #374151; /* gray-700 */
+            color: #f9fafb; /* gray-50 */
+        }
     </style>
 </head>
 <body class="bg-gray-900 text-gray-200 flex items-center justify-center min-h-screen p-4">
 
-    <div class="bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-2xl shadow-2xl p-6 md:p-8 w-full max-w-3xl">
+    <div class="relative bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-2xl shadow-2xl p-6 md:p-8 w-full max-w-3xl">
         
+        <!-- Language Switcher -->
+        <div class="absolute top-4 right-4 text-sm font-semibold p-1 bg-gray-900/50 rounded-lg border border-gray-700">
+            <button id="lang-th" class="lang-btn px-3 py-1 rounded-md transition-colors duration-200">TH</button>
+            <button id="lang-en" class="lang-btn px-3 py-1 rounded-md transition-colors duration-200">EN</button>
+        </div>
+
         <!-- Header Section -->
         <div class="text-center mb-6">
             <img src="assets/logo.png" alt="KMUTNB University Logo" class="mx-auto h-24 w-24 mb-4">
-            <h1 class="text-xl md:text-2xl font-bold text-white leading-tight">ระบบตรวจสอบข้อเท็จจริงปัญญาประดิษฐ์ทางการศึกษา<br>เพื่อส่งเสริมสัมมาทิฏฐิและการรู้ทันดิจิทัลของนักศึกษา</h1>
-            <p class="text-gray-400 mt-3 text-sm md:text-base">An Educational Artificial Intelligence Fact-Checking System to Enhance Students’ Righteousness and Digital Savvy</p>
+            <h1 id="main-title" class="text-xl md:text-2xl font-bold text-white leading-tight"></h1>
+            <p id="main-subtitle" class="text-gray-400 mt-3 text-sm md:text-base"></p>
         </div>
         
         <!-- Introduction for Evaluators -->
@@ -67,35 +77,24 @@
                     <i data-lucide="info" class="h-5 w-5 text-blue-400 mt-1"></i>
                 </div>
                 <div class="ml-3">
-                    <h3 class="text-sm font-medium text-blue-300">ยินดีต้อนรับผู้ประเมินทุกท่าน</h3>
+                    <h3 id="welcome-title" class="text-sm font-medium text-blue-300"></h3>
                     <div class="mt-2 text-sm text-gray-400 space-y-4">
-                        <p>ขอบคุณที่เข้าร่วมการประเมิน "ระบบตรวจสอบข้อเท็จจริงปัญญาประดิษฐ์ทางการศึกษาฯ" ซึ่งเป็นระบบต้นแบบเพื่องานวิจัยที่ออกแบบมาเพื่อตรวจสอบข้อเท็จจริงโดยอัตโนมัติ</p>
+                        <p id="welcome-p1"></p>
                         
                         <div>
-                            <h4 class="font-semibold text-gray-200">วิธีการใช้งาน:</h4>
-                            <ul class="list-disc list-inside mt-1 space-y-1">
-                                <li><strong>ขั้นตอนที่ 1:</strong> วางข้อความที่เป็นข้อเท็จจริง (Claim) ที่ต้องการตรวจสอบลงในกล่องข้อความ</li>
-                                <li><strong>ขั้นตอนที่ 2:</strong> กดปุ่ม "Analyze Claim" และรอให้ AI ประมวลผล</li>
-                                <li><strong>ขั้นตอนที่ 3:</strong> ตรวจสอบผลลัพธ์ซึ่งประกอบด้วยคำตัดสิน, บทสรุป, และหลักฐานที่พบ</li>
-                            </ul>
+                            <h4 id="welcome-how-to-title" class="font-semibold text-gray-200"></h4>
+                            <ul id="welcome-how-to-list" class="list-disc list-inside mt-1 space-y-1"></ul>
                         </div>
 
                         <div>
-                            <h4 class="font-semibold text-gray-200">ระบบนี้ทำอะไรได้บ้าง:</h4>
-                            <ul class="list-disc list-inside mt-1 space-y-1">
-                                <li>ตรวจสอบความถูกต้องของข้อเท็จจริงอย่างรวดเร็ว</li>
-                                <li>ค้นหาหลักฐานสนับสนุนและโต้แย้งจากแหล่งข้อมูลบนอินเทอร์เน็ต</li>
-                                <li>ประเมินและแสดงระดับความน่าเชื่อถือของแหล่งข้อมูลที่พบ</li>
-                                <li>เป็นเครื่องมือช่วยในการประเมินข้อมูลเบื้องต้นสำหรับงานวิจัยเชิงวิชาการ</li>
-                            </ul>
+                            <h4 id="welcome-what-can-title" class="font-semibold text-gray-200"></h4>
+                            <ul id="welcome-what-can-list" class="list-disc list-inside mt-1 space-y-1"></ul>
                         </div>
-                        <p>กรุณาทดสอบระบบด้วยข้อความที่หลากหลายและให้ความคิดเห็นของท่านผ่านแบบประเมิน เพื่อการพัฒนาระบบต่อไป</p>
+                        <p id="welcome-p2"></p>
 
                     </div>
                     <div class="mt-4">
-                        <button id="close-introduction" type="button" class="text-sm font-semibold text-blue-400 hover:text-blue-300">
-                            รับทราบและเริ่มใช้งาน
-                        </button>
+                        <button id="close-introduction" type="button" class="text-sm font-semibold text-blue-400 hover:text-blue-300"></button>
                     </div>
                 </div>
             </div>
@@ -109,22 +108,22 @@
         <!-- Input Section -->
         <div class="space-y-4">
             <label for="claim-input" class="sr-only">Enter a claim to analyze</label>
-            <textarea id="claim-input" rows="4" class="w-full bg-gray-900 border border-gray-700 rounded-lg p-4 text-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-200 placeholder-gray-500 resize-none" placeholder="วางข้อความที่ต้องการตรวจสอบที่นี่ (รองรับภาษาไทยและอังกฤษ) เช่น 'โรงพยาบาลศิริราชอยู่ในประเทศมาเลเซีย'"></textarea>
+            <textarea id="claim-input" rows="4" class="w-full bg-gray-900 border border-gray-700 rounded-lg p-4 text-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-200 placeholder-gray-500 resize-none"></textarea>
             <!-- UPDATED: Button Group -->
             <div id="button-group" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                  <button id="analyze-button" class="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold py-3 px-4 rounded-lg flex items-center justify-center space-x-2 transition-all duration-300 transform hover:scale-105 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed" disabled>
                     <i data-lucide="scan-line"></i>
-                    <span>Analyze Claim</span>
+                    <span data-lang-id="analyze-btn-text"></span>
                 </button>
                  <button id="clear-button" class="w-full bg-gray-600 hover:bg-gray-700 text-white font-semibold py-3 px-4 rounded-lg flex items-center justify-center space-x-2 transition-colors duration-200">
                     <i data-lucide="trash-2"></i>
-                    <span>Clear</span>
+                    <span data-lang-id="clear-btn-text"></span>
                 </button>
             </div>
              <!-- NEW: Stop Button (hidden by default) -->
             <button id="stop-button" class="w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-3 px-4 rounded-lg flex items-center justify-center space-x-2 transition-colors duration-200 hidden">
                 <i data-lucide="square"></i>
-                <span>Stop Analysis</span>
+                <span data-lang-id="stop-btn-text"></span>
             </button>
         </div>
 
@@ -137,7 +136,7 @@
                         <path d="M100 50.5908C100 78.2051 77.6142 100.591 50 100.591C22.3858 100.591 0 78.2051 0 50.5908C0 22.9766 22.3858 0.59082 50 0.59082C77.6142 0.59082 100 22.9766 100 50.5908ZM9.08144 50.5908C9.08144 73.1895 27.4013 91.5094 50 91.5094C72.5987 91.5094 90.9186 73.1895 90.9186 50.5908C90.9186 27.9921 72.5987 9.67226 50 9.67226C27.4013 9.67226 9.08144 27.9921 9.08144 50.5908Z" fill="currentColor"/>
                         <path d="M93.9676 39.0409C96.393 38.4038 97.8624 35.9116 97.0079 33.5539C95.2932 28.8227 92.871 24.3692 89.8167 20.348C85.8452 15.1192 80.8826 10.7238 75.2124 7.41289C69.5422 4.10194 63.2754 1.94025 56.7698 1.05124C51.7666 0.367541 46.6976 0.446843 41.7345 1.27873C39.2613 1.69328 37.813 4.19778 38.4501 6.62326C39.0873 9.04874 41.5694 10.4717 44.0505 10.1071C47.8511 9.54855 51.7191 9.52689 55.5402 10.0492C60.8642 10.7766 65.9928 12.5457 70.6331 15.2552C75.2735 17.9648 79.3347 21.5619 82.5849 25.841C84.9175 28.9121 86.7997 32.2913 88.1811 35.8758C89.083 38.2158 91.5421 39.6781 93.9676 39.0409Z" fill="currentFill"/>
                     </svg>
-                    <p class="mt-4 text-gray-400">Analyzing evidence and sources...</p>
+                    <p data-lang-id="loading-text" class="mt-4 text-gray-400"></p>
                 </div>
             </div>
 
@@ -145,9 +144,7 @@
             <div id="results-card" class="bg-gray-800 border border-gray-700 rounded-lg p-6 hidden fade-in">
                 <!-- Verdict Header -->
                 <div class="flex flex-col sm:flex-row items-start sm:items-center space-y-4 sm:space-y-0 sm:space-x-4 mb-6">
-                    <div id="verdict-icon" class="w-12 h-12 rounded-full flex items-center justify-center">
-                        <!-- Icon will be inserted here by JS -->
-                    </div>
+                    <div id="verdict-icon" class="w-12 h-12 rounded-full flex items-center justify-center"></div>
                     <div>
                         <h2 id="verdict-text" class="text-2xl font-bold"></h2>
                         <div class="flex items-center space-x-2 mt-1">
@@ -166,60 +163,50 @@
 
                 <!-- NEW: Sub-Claim Analysis Section -->
                 <div id="sub-claim-section" class="mb-6">
-                    <h3 class="text-lg font-semibold text-gray-300 mb-3 border-b border-gray-700 pb-2">Detailed Analysis</h3>
-                    <div id="sub-claim-list" class="space-y-3">
-                        <!-- JS will populate this -->
-                    </div>
+                    <h3 data-lang-id="detailed-analysis-title" class="text-lg font-semibold text-gray-300 mb-3 border-b border-gray-700 pb-2"></h3>
+                    <div id="sub-claim-list" class="space-y-3"></div>
                 </div>
 
                 <!-- Evidence Section -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <!-- Supporting Evidence -->
                     <div>
-                        <h3 class="text-lg font-semibold text-green-400 mb-3">Supporting Evidence</h3>
-                        <ul id="supporting-evidence-list" class="space-y-3">
-                           <!-- JS will populate this -->
-                        </ul>
+                        <h3 data-lang-id="supporting-evidence-title" class="text-lg font-semibold text-green-400 mb-3"></h3>
+                        <ul id="supporting-evidence-list" class="space-y-3"></ul>
                     </div>
                     <!-- Contradicting Evidence -->
                     <div>
-                        <h3 class="text-lg font-semibold text-red-400 mb-3">Contradicting Evidence</h3>
-                        <ul id="contradicting-evidence-list" class="space-y-3">
-                           <!-- JS will populate this -->
-                        </ul>
+                        <h3 data-lang-id="contradicting-evidence-title" class="text-lg font-semibold text-red-400 mb-3"></h3>
+                        <ul id="contradicting-evidence-list" class="space-y-3"></ul>
                     </div>
                 </div>
             </div>
              <!-- Feedback Section -->
             <div id="feedback-section" class="mt-8 text-center bg-gray-800 border border-gray-700 rounded-lg p-6 hidden fade-in">
-                <h3 class="font-semibold text-gray-300 mb-4">Was this analysis helpful for your research?</h3>
+                <h3 data-lang-id="feedback-title" class="font-semibold text-gray-300 mb-4"></h3>
                 <div id="feedback-buttons" class="flex justify-center space-x-3">
-                    <button class="feedback-btn px-4 py-2 bg-gray-700 hover:bg-green-600 rounded-md transition-colors" data-feedback="accurate">Accurate</button>
-                    <button class="feedback-btn px-4 py-2 bg-gray-700 hover:bg-red-600 rounded-md transition-colors" data-feedback="inaccurate">Inaccurate</button>
-                    <button class="feedback-btn px-4 py-2 bg-gray-700 hover:bg-yellow-600 rounded-md transition-colors" data-feedback="partial">Partially Accurate</button>
+                    <button data-lang-id="feedback-accurate-btn" class="feedback-btn px-4 py-2 bg-gray-700 hover:bg-green-600 rounded-md transition-colors" data-feedback="accurate"></button>
+                    <button data-lang-id="feedback-inaccurate-btn" class="feedback-btn px-4 py-2 bg-gray-700 hover:bg-red-600 rounded-md transition-colors" data-feedback="inaccurate"></button>
+                    <button data-lang-id="feedback-partial-btn" class="feedback-btn px-4 py-2 bg-gray-700 hover:bg-yellow-600 rounded-md transition-colors" data-feedback="partial"></button>
                 </div>
-                <p id="feedback-thanks" class="text-green-400 mt-4 hidden">Thank you for your feedback!</p>
+                <p id="feedback-thanks" data-lang-id="feedback-thanks-text" class="text-green-400 mt-4 hidden"></p>
             </div>
             
             <!-- "How It Works" Section -->
             <div class="mt-8 text-left bg-gray-900/50 border border-gray-700 rounded-lg p-6 fade-in">
                 <details>
-                    <summary class="font-semibold text-gray-300 cursor-pointer hover:text-white transition-colors duration-200 flex items-center justify-between">
-                        <span>How This AI Fact-Checker Works (Based on the 6-Phase Research Framework)</span>
-                        <i data-lucide="chevron-down" class="w-5 h-5 transition-transform duration-300"></i>
-                    </summary>
+                    <summary id="how-it-works-summary" class="font-semibold text-gray-300 cursor-pointer hover:text-white transition-colors duration-200 flex items-center justify-between"></summary>
                     <div class="mt-4 space-y-4 text-gray-400 text-sm border-t border-gray-700 pt-4">
-                        <p>This system's methodology is grounded in a six-phase fact-checking process identified from academic literature. Here’s how your claim is processed:</p>
+                        <p id="how-it-works-p1"></p>
                         <ol class="list-decimal list-inside space-y-3">
-                            <li><strong class="text-gray-200">Data Collection & Evidence Retrieval (Phase 1 & 4):</strong> When you submit a claim, the AI utilizes a powerful search tool to gather real-time evidence from a vast index of credible web sources, simulating the data collection and retrieval phases.</li>
-                            <li><strong class="text-gray-200">Preprocessing & Claim Detection (Phase 2 & 3):</strong> The AI internally processes your claim, normalizing it and identifying its core factual components to prepare for analysis. This happens automatically within the language model.</li>
-                            <li><strong class="text-gray-200">Verification (Phase 5):</strong> The AI critically compares the claim against the retrieved evidence, analyzing for corroboration and contradiction. This is the core verification step where relationships between claim and evidence are determined.</li>
-                            <li><strong class="text-gray-200">Reasoning & Source Assessment (Phase 6 & 5):</strong> Based on the verification, the AI generates a final verdict (True, False, Partially True), a confidence score, and a concise summary explaining its logic. It also assesses the credibility of the sources found to ensure transparency.</li>
+                           <li id="how-it-works-li1"></li>
+                           <li id="how-it-works-li2"></li>
+                           <li id="how-it-works-li3"></li>
+                           <li id="how-it-works-li4"></li>
                         </ol>
                     </div>
                 </details>
             </div>
-            
         </div>
     </div>
 
@@ -250,10 +237,122 @@
         const contradictingList = document.getElementById('contradicting-evidence-list');
         const feedbackButtons = document.getElementById('feedback-buttons');
         const feedbackThanks = document.getElementById('feedback-thanks');
+        const langThButton = document.getElementById('lang-th');
+        const langEnButton = document.getElementById('lang-en');
         
         // --- State & Constants ---
         const API_ENDPOINT = "https://veritas-lens-project.onrender.com/analyze";
         let abortController = new AbortController();
+
+        // --- TRANSLATION LOGIC ---
+        const translations = {
+            en: {
+                "main-title": "An Educational Artificial Intelligence Fact-Checking System<br>to Enhance Students’ Righteousness and Digital Savvy",
+                "main-subtitle": "ระบบตรวจสอบข้อเท็จจริงปัญญาประดิษฐ์ทางการศึกษาเพื่อส่งเสริมสัมมาทิฏฐิและการรู้ทันดิจิทัลของนักศึกษา",
+                "welcome-title": "Welcome, Evaluators",
+                "welcome-p1": "Thank you for participating in the evaluation of this research prototype system designed for automated fact-checking.",
+                "welcome-how-to-title": "How to Use:",
+                "welcome-how-to-list": `<li><strong>Step 1:</strong> Paste a factual claim you want to check into the text box.</li><li><strong>Step 2:</strong> Click the "Analyze Claim" button and wait for the AI to process.</li><li><strong>Step 3:</strong> Review the results, which include a verdict, summary, and found evidence.</li>`,
+                "welcome-what-can-title": "What can this system do?",
+                "welcome-what-can-list": `<li>Quickly verify the accuracy of factual claims.</li><li>Find supporting and contradicting evidence from internet sources.</li><li>Assess and display the credibility level of the sources found.</li><li>Serve as a preliminary data assessment tool for academic research.</li>`,
+                "welcome-p2": "Please test the system with various claims and provide your feedback via the evaluation form to aid in future development.",
+                "close-introduction": "Got it, let's begin",
+                "claim-input-placeholder": "Paste a claim to verify here (e.g., King Mongkut's University of Technology North Bangkok is a private university located in Thailand)",
+                "analyze-btn-text": "Analyze Claim",
+                "clear-btn-text": "Clear",
+                "stop-btn-text": "Stop Analysis",
+                "loading-text": "Analyzing evidence and sources...",
+                "detailed-analysis-title": "Detailed Analysis",
+                "supporting-evidence-title": "Supporting Evidence",
+                "contradicting-evidence-title": "Contradicting Evidence",
+                "feedback-title": "Was this analysis helpful for your research?",
+                "feedback-accurate-btn": "Accurate",
+                "feedback-inaccurate-btn": "Inaccurate",
+                "feedback-partial-btn": "Partially Accurate",
+                "feedback-thanks-text": "Thank you for your feedback!",
+                "how-it-works-summary": "<span>How This AI Fact-Checker Works (Based on the 6-Phase Research Framework)</span><i data-lucide=\"chevron-down\" class=\"w-5 h-5 transition-transform duration-300\"></i>",
+                "how-it-works-p1": "This system's methodology is grounded in a six-phase fact-checking process identified from academic literature. Here’s how your claim is processed:",
+                "how-it-works-li1": `<strong class="text-gray-200">Data Collection & Evidence Retrieval (Phase 1 & 4):</strong> When you submit a claim, the AI utilizes a powerful search tool to gather real-time evidence from a vast index of credible web sources, simulating the data collection and retrieval phases.`,
+                "how-it-works-li2": `<strong class="text-gray-200">Preprocessing & Claim Detection (Phase 2 & 3):</strong> The AI internally processes your claim, normalizing it and identifying its core factual components to prepare for analysis. This happens automatically within the language model.`,
+                "how-it-works-li3": `<strong class="text-gray-200">Verification (Phase 5):</strong> The AI critically compares the claim against the retrieved evidence, analyzing for corroboration and contradiction. This is the core verification step where relationships between claim and evidence are determined.`,
+                "how-it-works-li4": `<strong class="text-gray-200">Reasoning & Source Assessment (Phase 6 & 5):</strong> Based on the verification, the AI generates a final verdict (True, False, Partially True), a confidence score, and a concise summary explaining its logic. It also assesses the credibility of the sources found to ensure transparency.`,
+                "confidence-label": "Confidence",
+                "no-evidence-supporting": "No direct supporting evidence found.",
+                "no-evidence-contradicting": "No direct contradicting evidence found."
+            },
+            th: {
+                "main-title": "ระบบตรวจสอบข้อเท็จจริงปัญญาประดิษฐ์ทางการศึกษา<br>เพื่อส่งเสริมสัมมาทิฏฐิและการรู้ทันดิจิทัลของนักศึกษา",
+                "main-subtitle": "An Educational Artificial Intelligence Fact-Checking System to Enhance Students’ Righteousness and Digital Savvy",
+                "welcome-title": "ยินดีต้อนรับผู้ประเมินทุกท่าน",
+                "welcome-p1": "ขอบคุณที่เข้าร่วมการประเมิน \"ระบบตรวจสอบข้อเท็จจริงปัญญาประดิษฐ์ทางการศึกษาฯ\" ซึ่งเป็นระบบต้นแบบเพื่องานวิจัยที่ออกแบบมาเพื่อตรวจสอบข้อเท็จจริงโดยอัตโนมัติ",
+                "welcome-how-to-title": "วิธีการใช้งาน:",
+                "welcome-how-to-list": `<li><strong>ขั้นตอนที่ 1:</strong> วางข้อความที่เป็นข้อเท็จจริง (Claim) ที่ต้องการตรวจสอบลงในกล่องข้อความ</li><li><strong>ขั้นตอนที่ 2:</strong> กดปุ่ม "Analyze Claim" และรอให้ AI ประมวลผล</li><li><strong>ขั้นตอนที่ 3:</strong> ตรวจสอบผลลัพธ์ซึ่งประกอบด้วยคำตัดสิน, บทสรุป, และหลักฐานที่พบ</li>`,
+                "welcome-what-can-title": "ระบบนี้ทำอะไรได้บ้าง:",
+                "welcome-what-can-list": `<li>ตรวจสอบความถูกต้องของข้อเท็จจริงอย่างรวดเร็ว</li><li>ค้นหาหลักฐานสนับสนุนและโต้แย้งจากแหล่งข้อมูลบนอินเทอร์เน็ต</li><li>ประเมินและแสดงระดับความน่าเชื่อถือของแหล่งข้อมูลที่พบ</li><li>เป็นเครื่องมือช่วยในการประเมินข้อมูลเบื้องต้นสำหรับงานวิจัยเชิงวิชาการ</li>`,
+                "welcome-p2": "กรุณาทดสอบระบบด้วยข้อความที่หลากหลายและให้ความคิดเห็นของท่านผ่านแบบประเมิน เพื่อการพัฒนาระบบต่อไป",
+                "close-introduction": "รับทราบและเริ่มใช้งาน",
+                "claim-input-placeholder": "วางข้อความที่ต้องการตรวจสอบที่นี่ / Paste a claim to verify here (e.g., มหาวิทยาลัยเทคโนพระจอมเกล้าพระนครเหนือเป็นมหาวิทยาลัยเอกชนที่ตั้งอยู่ในประเทศไทย)",
+                "analyze-btn-text": "ตรวจสอบข้อเท็จจริง",
+                "clear-btn-text": "ล้างข้อมูล",
+                "stop-btn-text": "หยุดการวิเคราะห์",
+                "loading-text": "กำลังวิเคราะห์หลักฐานและแหล่งข้อมูล...",
+                "detailed-analysis-title": "การวิเคราะห์เชิงลึก",
+                "supporting-evidence-title": "หลักฐานสนับสนุน",
+                "contradicting-evidence-title": "หลักฐานโต้แย้ง",
+                "feedback-title": "การวิเคราะห์นี้เป็นประโยชน์ต่องานวิจัยของคุณหรือไม่?",
+                "feedback-accurate-btn": "ถูกต้อง",
+                "feedback-inaccurate-btn": "ไม่ถูกต้อง",
+                "feedback-partial-btn": "ถูกต้องบางส่วน",
+                "feedback-thanks-text": "ขอบคุณสำหรับความคิดเห็น!",
+                "how-it-works-summary": "<span>ระบบตรวจสอบข้อเท็จจริงนี้ทำงานอย่างไร (ตามกรอบการวิจัย 6 ระยะ)</span><i data-lucide=\"chevron-down\" class=\"w-5 h-5 transition-transform duration-300\"></i>",
+                "how-it-works-p1": "ระเบียบวิธีของระบบนี้มีพื้นฐานมาจากกระบวนการตรวจสอบข้อเท็จจริง 6 ระยะที่ระบุไว้ในงานวิจัยทางวิชาการ นี่คือวิธีการประมวลผลข้อกล่าวอ้างของคุณ:",
+                "how-it-works-li1": `<strong class="text-gray-200">การรวบรวมข้อมูลและการเรียกค้นหลักฐาน (ระยะที่ 1 & 4):</strong> เมื่อคุณส่งข้อกล่าวอ้าง AI จะใช้เครื่องมือค้นหาที่ทรงพลังเพื่อรวบรวมหลักฐานแบบเรียลไทม์จากแหล่งข้อมูลบนเว็บที่น่าเชื่อถือจำนวนมาก ซึ่งเป็นการจำลองระยะการรวบรวมข้อมูลและการดึงข้อมูล`,
+                "how-it-works-li2": `<strong class="text-gray-200">การประมวลผลล่วงหน้าและการตรวจจับข้ออ้างอิง (ระยะที่ 2 & 3):</strong> AI จะประมวลผลข้อกล่าวอ้างของคุณภายใน ทำให้เป็นมาตรฐาน และระบุองค์ประกอบข้อเท็จจริงหลักเพื่อเตรียมพร้อมสำหรับการวิเคราะห์ สิ่งนี้จะเกิดขึ้นโดยอัตโนมัติภายในแบบจำลองภาษา`,
+                "how-it-works-li3": `<strong class="text-gray-200">การตรวจสอบ (ระยะที่ 5):</strong> AI จะเปรียบเทียบข้อกล่าวอ้างกับหลักฐานที่ค้นพบอย่างมีวิจารณญาณ วิเคราะห์เพื่อหาการยืนยันและการขัดแย้ง นี่คือขั้นตอนการตรวจสอบหลักซึ่งความสัมพันธ์ระหว่างข้อกล่าวอ้างและหลักฐานจะถูกกำหนด`,
+                "how-it-works-li4": `<strong class="text-gray-200">การให้เหตุผลและการประเมินแหล่งที่มา (ระยะที่ 6 & 5):</strong> จากการตรวจสอบ AI จะสร้างคำตัดสินสุดท้าย (จริง, เท็จ, จริงบางส่วน), คะแนนความเชื่อมั่น และบทสรุปที่กระชับซึ่งอธิบายตรรกะของมัน นอกจากนี้ยังประเมินความน่าเชื่อถือของแหล่งที่มาที่พบเพื่อความโปร่งใส`,
+                "confidence-label": "ความเชื่อมั่น",
+                "no-evidence-supporting": "ไม่พบหลักฐานสนับสนุนโดยตรง",
+                "no-evidence-contradicting": "ไม่พบหลักฐานโต้แย้งโดยตรง"
+            }
+        };
+
+        let currentLang = 'th'; // Default language
+
+        function setLanguage(lang) {
+            currentLang = lang;
+            const langStrings = translations[lang];
+
+            // Set text for elements with IDs
+            for (const id in langStrings) {
+                 const element = document.getElementById(id);
+                 if (element) {
+                    element.innerHTML = langStrings[id];
+                 }
+            }
+            
+            // Set text for elements with data-lang-id attributes
+            document.querySelectorAll('[data-lang-id]').forEach(element => {
+                const key = element.getAttribute('data-lang-id');
+                if (langStrings[key]) {
+                    element.textContent = langStrings[key];
+                }
+            });
+            
+            // Set placeholder text
+            claimInput.placeholder = langStrings["claim-input-placeholder"];
+
+            // Update button styles
+            if (lang === 'th') {
+                langThButton.classList.add('active');
+                langEnButton.classList.remove('active');
+            } else {
+                langEnButton.classList.add('active');
+                langThButton.classList.remove('active');
+            }
+
+            // Re-initialize Lucide icons since we're changing innerHTML
+            lucide.createIcons();
+        }
 
         // --- Event Listeners ---
         claimInput.addEventListener('input', () => {
@@ -267,11 +366,13 @@
             introductionSection.style.display = 'none';
         });
         
+        langThButton.addEventListener('click', () => setLanguage('th'));
+        langEnButton.addEventListener('click', () => setLanguage('en'));
+        
         feedbackButtons.addEventListener('click', (e) => {
             if(e.target.classList.contains('feedback-btn')) {
                 feedbackButtons.classList.add('hidden');
                 feedbackThanks.classList.remove('hidden');
-                // Clear everything after a short delay so user can see the message
                 setTimeout(() => {
                     clearAll();
                     feedbackButtons.classList.remove('hidden');
@@ -284,22 +385,18 @@
         async function analyzeClaim() {
             const claim = claimInput.value.trim();
             if (!claim) return;
-
-            // Reset UI for a new analysis
             resetUIState();
             resultsContainer.classList.remove('hidden');
             loadingSpinner.classList.remove('hidden');
             buttonGroup.classList.add('hidden');
             stopButton.classList.remove('hidden');
-
-            // Create a new AbortController for this specific request
             abortController = new AbortController();
 
             try {
                 const response = await fetch(API_ENDPOINT, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    signal: abortController.signal, // Pass the signal to fetch
+                    signal: abortController.signal,
                     body: JSON.stringify({ claim: claim })
                 });
 
@@ -314,7 +411,7 @@
             } catch (error) {
                 if (error.name === 'AbortError') {
                     console.log('Fetch aborted by user.');
-                    resetUIState(true); // Reset without showing an error
+                    resetUIState(true);
                 } else {
                     console.error("Analysis failed:", error);
                     showError(`Analysis failed: ${error.message}`);
@@ -362,10 +459,8 @@
         }
 
         function displayResults(data) {
-            // Display Overall Verdict
             verdictText.textContent = data.overall_verdict;
             let iconHtml = '', iconBgClass = '', barBgClass = '';
-
             switch (data.overall_verdict) {
                 case 'True':
                     iconHtml = '<i data-lucide="check-check" class="w-6 h-6 text-white"></i>';
@@ -387,20 +482,18 @@
             verdictIcon.className = `w-12 h-12 rounded-full flex items-center justify-center ${iconBgClass}`;
             lucide.createIcons();
 
-            confidenceText.textContent = `Confidence: ${data.overall_confidence}%`;
+            confidenceText.textContent = `${translations[currentLang]['confidence-label']}: ${data.overall_confidence}%`;
             confidenceBar.style.width = `${data.overall_confidence}%`;
             confidenceBar.className = `h-2 rounded-full ${barBgClass}`;
             summaryText.textContent = data.overall_summary;
             
-            // Display Sub-Claim Analysis
-            subClaimList.innerHTML = ''; // Clear previous results
+            subClaimList.innerHTML = '';
             if(data.sub_claim_analysis && data.sub_claim_analysis.length > 0) {
                 data.sub_claim_analysis.forEach(item => {
                     subClaimList.appendChild(createSubClaimItem(item));
                 });
             }
 
-            // Display Evidence
             populateList(supportingList, data.supporting_evidence);
             populateList(contradictingList, data.contradicting_evidence);
         }
@@ -408,7 +501,6 @@
         function createSubClaimItem(item) {
             const div = document.createElement('div');
             div.className = "bg-gray-900/50 p-3 rounded-md border border-gray-700 text-sm flex items-start space-x-3";
-            
             let iconHtml = '', iconColor = '';
             switch(item.verdict) {
                 case 'True':
@@ -424,13 +516,7 @@
                      iconColor = 'text-yellow-400';
             }
 
-            div.innerHTML = `
-                <div class="flex-shrink-0 ${iconColor} pt-0.5">${iconHtml}</div>
-                <div>
-                    <p class="font-semibold text-gray-200">${item.sub_claim}</p>
-                    <p class="text-gray-400">${item.reasoning}</p>
-                </div>
-            `;
+            div.innerHTML = `<div class="flex-shrink-0 ${iconColor} pt-0.5">${iconHtml}</div><div><p class="font-semibold text-gray-200">${item.sub_claim}</p><p class="text-gray-400">${item.reasoning}</p></div>`;
             lucide.createIcons();
             return div;
         }
@@ -438,7 +524,6 @@
         function createEvidenceItem(item) {
             const li = document.createElement('li');
             li.className = "bg-gray-900/50 p-3 rounded-md border border-gray-700 text-sm";
-            
             let credibilityColor = 'bg-gray-600';
             let credibilityText = item.credibility || 'Medium';
 
@@ -452,46 +537,35 @@
             
             let sourceElement = '';
             if (item.source && item.source.includes('vertexaisearch.cloud.google.com')) {
-                sourceElement = `
-                    <span class="text-gray-500 inline-flex items-center space-x-1" title="This source is a temporary web search result from the AI and cannot be opened directly.">
-                        <span>Source: Web Search</span>
-                        <i data-lucide="search" class="w-3 h-3"></i>
-                    </span>`;
+                sourceElement = `<span class="text-gray-500 inline-flex items-center space-x-1" title="This source is a temporary web search result from the AI and cannot be opened directly."><span>Source: Web Search</span><i data-lucide="search" class="w-3 h-3"></i></span>`;
             } else {
-                sourceElement = `
-                    <a href="${item.source}" target="_blank" rel="noopener noreferrer" class="text-blue-400 hover:underline inline-flex items-center space-x-1 break-all">
-                        <span>Source</span>
-                        <i data-lucide="arrow-up-right" class="w-3 h-3"></i>
-                    </a>`;
+                sourceElement = `<a href="${item.source}" target="_blank" rel="noopener noreferrer" class="text-blue-400 hover:underline inline-flex items-center space-x-1 break-all"><span>Source</span><i data-lucide="arrow-up-right" class="w-3 h-3"></i></a>`;
             }
 
-            li.innerHTML = `
-                <p class="text-gray-300">"${item.text}"</p>
-                <div class="flex flex-wrap items-center justify-between mt-2 text-xs gap-2">
-                    ${sourceElement}
-                    <span class="font-semibold text-white ${credibilityColor} px-2 py-0.5 rounded-full">${credibilityText} Credibility</span>
-                </div>
-            `;
+            li.innerHTML = `<p class="text-gray-300">"${item.text}"</p><div class="flex flex-wrap items-center justify-between mt-2 text-xs gap-2">${sourceElement}<span class="font-semibold text-white ${credibilityColor} px-2 py-0.5 rounded-full">${credibilityText} Credibility</span></div>`;
             return li;
         }
 
         function populateList(listElement, evidenceArray) {
             listElement.innerHTML = ''; 
-            
             if (!evidenceArray || evidenceArray.length === 0) {
                 const li = document.createElement('li');
                 li.className = "text-gray-500 italic text-sm";
                 const type = listElement.id.includes('supporting') ? 'supporting' : 'contradicting';
-                li.textContent = `No direct ${type} evidence found.`;
+                li.textContent = translations[currentLang][`no-evidence-${type}`];
                 listElement.appendChild(li);
                 return;
             }
-
             evidenceArray.forEach(item => {
                 listElement.appendChild(createEvidenceItem(item));
             });
             lucide.createIcons();
         }
+        
+        // Initial setup on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            setLanguage('th'); // Set default language to Thai
+        });
 
     </script>
 
