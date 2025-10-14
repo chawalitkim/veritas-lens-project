@@ -11,14 +11,14 @@ const TRUSTED_DOMAINS = [
     'reuters.com', 'apnews.com', 'bbc.com', 'nytimes.com', 'washingtonpost.com',
     'wsj.com', 'theguardian.com', 'npr.org', 'pbs.org', 'forbes.com', 'bloomberg.com',
     '.gov', '.edu', // High-trust TLDs
-    'wikipedia.org', 'nasa.gov', 'who.int', 'cdc.gov', 'kmutnb.ac.th'
+    'wikipedia.org', 'nasa.gov', 'who.int', 'cdc.gov', 'kmutnb.ac.th', 'topuniversities.com', 'timeshighereducation.com'
 ];
 
 app.use(cors({ origin: '*' }));
 app.use(express.json());
 
 app.get('/', (req, res) => {
-  res.send('Veritas Lens AI Server is running! - v3 Final');
+  res.send('Veritas Lens AI Server is running! - v4 Final');
 });
 
 app.post('/analyze', async (req, res) => {
@@ -77,20 +77,19 @@ async function verifyWithGemini(claim) {
         tools: [{ "google_search": {} }],
     });
 
-    // UPDATED PROMPT: Added explicit examples of good and bad URLs.
+    // FINAL PROMPT: Added a mandatory self-verification step for all sources.
     const prompt = `
         You are an expert fact-checker. Your task is to verify the following claim by searching the web for credible, authoritative sources.
 
         CRITICAL INSTRUCTION: First, break down the main claim into smaller, verifiable sub-claims. For each sub-claim, determine its verdict ('True' or 'False') and provide a brief reasoning. Then, based on the sub-claim analysis, provide an 'overall_verdict'. If any significant sub-claim is 'False', the 'overall_verdict' must be 'Partially True' or 'False'. Only if all sub-claims are 'True' can the 'overall_verdict' be 'True'.
 
-        EVIDENCE REQUIREMENTS: For each piece of evidence you find, you MUST provide:
-        1.  "source_url": The final, public, and directly accessible URL of the webpage. This is the most critical requirement.
-        2.  "source_title": The official title of the webpage from the source URL.
-        3.  "text": A direct, relevant quote from the source that serves as evidence.
+        EVIDENCE REQUIREMENTS & SELF-VERIFICATION (MANDATORY):
+        For each piece of evidence you find, you MUST provide:
+        1.  "source_url": The final, public, and directly accessible URL of the specific article or page.
+        2.  "source_title": The official title of the webpage.
+        3.  "text": A direct, relevant quote from the source.
 
-        URL POLICY: You MUST provide the final destination URL.
-        - BAD EXAMPLE (DO NOT DO THIS): "source_url": "https://vertexaisearch.cloud.google.com/..."
-        - GOOD EXAMPLE (DO THIS): "source_url": "https://en.wikipedia.org/wiki/History_of_Thailand"
+        After finding these three pieces of information, you MUST perform a self-verification step: Confirm that the "text" quote actually exists on the "source_url" page. If it does not, you must discard that source and find a new one. DO NOT provide URLs to generic search pages or homepages. The URL must lead directly to the content.
 
         RESPONSE FORMAT: Your response MUST be in a strict JSON format, with no extra text or markdown. All textual output (summaries, reasoning) MUST be in the same language as the original claim.
 
