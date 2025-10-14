@@ -282,11 +282,11 @@
                 "feedback-partial-btn": "ถูกต้องบางส่วน",
                 "feedback-thanks-text": "ขอบคุณสำหรับความคิดเห็น!",
                 "how-it-works-summary": "<span>ระบบตรวจสอบข้อเท็จจริงนี้ทำงานอย่างไร (ตามกรอบการวิจัย 6 ระยะ)</span><i data-lucide=\"chevron-down\" class=\"w-5 h-5 transition-transform duration-300\"></i>",
-                "how-it-works-p1": "ระเบียบวิธีของระบบนี้มีพื้นฐานมาจากกระบวนการตรวจสอบข้อเท็จจริง 6 ระยะที่ระบุไว้ในงานวิจัยทางวิชาการ นี่คือวิธีการประมวลผลข้อกล่าวอ้างของคุณ:",
-                "how-it-works-li1": `<strong class="text-gray-200">การรวบรวมข้อมูลและการเรียกค้นหลักฐาน (ระยะที่ 1 & 4):</strong> เมื่อคุณส่งข้อกล่าวอ้าง AI จะใช้เครื่องมือค้นหาที่ทรงพลังเพื่อรวบรวมหลักฐานแบบเรียลไทม์จากแหล่งข้อมูลบนเว็บที่น่าเชื่อถือจำนวนมาก`,
-                "how-it-works-li2": `<strong class="text-gray-200">การประมวลผลล่วงหน้าและการตรวจจับข้ออ้างอิง (ระยะที่ 2 & 3):</strong> AI จะประมวลผลข้อกล่าวอ้างของคุณภายใน ทำให้เป็นมาตรฐาน และระบุองค์ประกอบข้อเท็จจริงหลักเพื่อเตรียมพร้อมสำหรับการวิเคราะห์`,
-                "how-it-works-li3": `<strong class="text-gray-200">การตรวจสอบ (ระยะที่ 5):</strong> AI จะเปรียบเทียบข้อกล่าวอ้างกับหลักฐานที่ค้นพบอย่างมีวิจารณญาณ วิเคราะห์เพื่อหาการยืนยันและการขัดแย้ง`,
-                "how-it-works-li4": `<strong class="text-gray-200">การให้เหตุผลและการประเมินแหล่งที่มา (ระยะที่ 6 & 5):</strong> AI จะสร้างคำตัดสินสุดท้าย, คะแนนความเชื่อมั่น และบทสรุปที่กระชับซึ่งอธิบายตรรกะของมัน นอกจากนี้ยังประเมินความน่าเชื่อถือของแหล่งที่มาที่พบ`,
+                "how-it-works-p1": "ระบบนี้มีพื้นฐานมาจากกระบวนการตรวจสอบข้อเท็จจริง 6 ระยะที่ระบุไว้ในงานวิจัยทางวิชาการนี้ อันประกอบด้วย:",
+                "how-it-works-li1": `<strong class="text-gray-200">1. การรวบรวมข้อมูลและการเรียกค้นหลักฐาน (ระยะที่ 1 & 4):</strong> เมื่อส่งเนื้อหาที่ต้องการตรวจสอบ AI จะใช้เครื่องมือค้นหาเพื่อรวบรวมหลักฐานแบบเรียลไทม์จากแหล่งข้อมูลบนเว็บที่น่าเชื่อถือจำนวนมาก`,
+                "how-it-works-li2": `<strong class="text-gray-200">2. การประมวลผลล่วงหน้าและการตรวจจับข้ออ้างอิง (ระยะที่ 2 & 3):</strong> AI จะประมวลผลเนื้อหาที่ต้องการตรวจสอบภายใน ทำให้เป็นมาตรฐาน และระบุองค์ประกอบข้อเท็จจริงหลักเพื่อเตรียมพร้อมสำหรับการวิเคราะห์`,
+                "how-it-works-li3": `<strong class="text-gray-200">3. การตรวจสอบ (ระยะที่ 5):</strong> AI จะเปรียบเทียบข้อกล่าวอ้างกับหลักฐานที่ค้นพบอย่างมีวิจารณญาณ วิเคราะห์เพื่อหาการยืนยันและการขัดแย้ง`,
+                "how-it-works-li4": `<strong class="text-gray-200">4. การให้เหตุผลและการประเมินแหล่งที่มา (ระยะที่ 6 & 5):</strong> AI จะสร้างคำตัดสินสุดท้าย ให้คะแนนความเชื่อมั่น และบทสรุปที่กระชับซึ่งอธิบายตรรกะของการวิเคราะห์ อีกทัั้งยังประเมินความน่าเชื่อถือของแหล่งที่มาที่พบแสดงเพิ่มเติม`,
                 "confidence-label": "ความเชื่อมั่น",
                 "no-evidence-supporting": "ไม่พบหลักฐานสนับสนุนโดยตรง",
                 "no-evidence-contradicting": "ไม่พบหลักฐานโต้แย้งโดยตรง",
@@ -533,25 +533,20 @@
             else if (item.credibility === 'Medium') credibilityColor = 'bg-yellow-600';
             
             let sourceElement = '';
-            
+            const fallbackTitle = translations[currentLang]['source-title-fallback'];
             if (item.source_url && item.source_url.includes('vertexaisearch.cloud.google.com')) {
-                // Case 1: Internal Google redirect link
                 sourceElement = `<span class="text-gray-500 inline-flex items-center space-x-1" title="This source is a temporary web search result from the AI and cannot be opened directly."><span>Source: Web Search</span><i data-lucide="search" class="w-3 h-3"></i></span>`;
             } else if (item.source_url) {
-                // Case 2: A valid URL is provided
                 let displayTitle = item.source_title;
                 if (!displayTitle) {
                     try {
-                        // If no title, fallback to the hostname (e.g., en.wikipedia.org)
                         displayTitle = new URL(item.source_url).hostname;
                     } catch (e) {
-                        // If URL is malformed, use a generic fallback
-                        displayTitle = translations[currentLang]['source-title-fallback'];
+                        displayTitle = fallbackTitle;
                     }
                 }
                 sourceElement = `<a href="${item.source_url}" target="_blank" rel="noopener noreferrer" class="text-blue-400 hover:underline inline-flex items-center space-x-1 break-all" title="${item.source_url}"><span>${displayTitle}</span><i data-lucide="arrow-up-right" class="w-3 h-3"></i></a>`;
             } else {
-                // Case 3: No URL is provided at all
                 const unavailableText = translations[currentLang]['source-unavailable'];
                 sourceElement = `<span class="text-gray-500 inline-flex items-center space-x-1"><span>${unavailableText}</span><i data-lucide="link-2-off" class="w-3 h-3"></i></span>`;
             }
