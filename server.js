@@ -18,7 +18,7 @@ app.use(cors({ origin: '*' }));
 app.use(express.json());
 
 app.get('/', (req, res) => {
-  res.send('Veritas Lens AI Server is running! - v4 Final');
+  res.send('Veritas Lens AI Server is running! - v5 Final');
 });
 
 app.post('/analyze', async (req, res) => {
@@ -77,7 +77,7 @@ async function verifyWithGemini(claim) {
         tools: [{ "google_search": {} }],
     });
 
-    // FINAL PROMPT: Added a mandatory self-verification step for all sources.
+    // FINAL PROMPT: Added a mandatory self-verification step and a penalty clause.
     const prompt = `
         You are an expert fact-checker. Your task is to verify the following claim by searching the web for credible, authoritative sources.
 
@@ -89,7 +89,9 @@ async function verifyWithGemini(claim) {
         2.  "source_title": The official title of the webpage.
         3.  "text": A direct, relevant quote from the source.
 
-        After finding these three pieces of information, you MUST perform a self-verification step: Confirm that the "text" quote actually exists on the "source_url" page. If it does not, you must discard that source and find a new one. DO NOT provide URLs to generic search pages or homepages. The URL must lead directly to the content.
+        After finding these three pieces of information, you MUST perform a self-verification step: Confirm that the "text" quote actually exists on the "source_url" page. The URL must lead directly to the content containing the quote.
+
+        PENALTY CLAUSE: Responses that include internal redirect URLs (like "vertexaisearch.cloud.google.com") will be considered a failure to follow instructions. You must find and provide the final destination URL.
 
         RESPONSE FORMAT: Your response MUST be in a strict JSON format, with no extra text or markdown. All textual output (summaries, reasoning) MUST be in the same language as the original claim.
 
