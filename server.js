@@ -18,7 +18,7 @@ app.use(cors({ origin: '*' }));
 app.use(express.json());
 
 app.get('/', (req, res) => {
-  res.send('Veritas Lens AI Server is running! - v5 Final'); // Updated version check
+  res.send('Veritas Lens AI Server is running! - v6 Source Fallback'); // Updated version check
 });
 
 app.post('/analyze', async (req, res) => {
@@ -59,7 +59,7 @@ app.listen(port, () => {
 });
 
 /**
- * NEW: Simple language detection function.
+ * Simple language detection function.
  * Returns 'th' if Thai characters are detected, otherwise defaults to 'en'.
  */
 function detectLanguage(text) {
@@ -72,7 +72,8 @@ function detectLanguage(text) {
 
 
 function assessSourceCredibility(url) {
-    if (!url || url.includes('vertexaisearch.cloud.google.com')) return 'Medium';
+    // If URL is explicitly null/empty or internal, it's medium at best
+    if (!url || url.includes('vertexaisearch.cloud.google.com')) return 'Medium'; 
     try {
         const domain = new URL(url).hostname.replace(/^www\./, '');
         const isTrusted = TRUSTED_DOMAINS.some(trustedDomain => {
@@ -83,14 +84,15 @@ function assessSourceCredibility(url) {
         });
         return isTrusted ? 'High' : 'Medium';
     } catch (error) {
+         // Malformed URLs are low credibility
         return 'Low';
     }
 }
 
 /**
- * Updated verifyWithGemini to accept and use the target language.
+ * Updated verifyWithGemini to include source fallback instructions.
  */
-async function verifyWithGemini(claim, targetLang) { // Added targetLang parameter
+async function verifyWithGemini(claim, targetLang) { 
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
     
     const model = genAI.getGenerativeModel({ 
@@ -98,7 +100,7 @@ async function verifyWithGemini(claim, targetLang) { // Added targetLang paramet
         tools: [{ "google_search": {} }],
     });
 
-    // FINAL PROMPT: Added explicit target language instruction at the end.
+    // FINAL PROMPT: Added source fallback instruction.
     const prompt = `
         You are an expert fact-checker. Your task is to verify the following claim by searching the web for credible, authoritative sources.
 
@@ -114,6 +116,8 @@ async function verifyWithGemini(claim, targetLang) { // Added targetLang paramet
 
         PENALTY CLAUSE: Responses that include internal redirect URLs (like "vertexaisearch.cloud.google.com") will be considered a failure to follow instructions. You must find and provide the final destination URL.
 
+        SOURCE FALLBACK: If, after diligent search and self-verification, you absolutely cannot find a valid, accessible "source_url" and "source_title" for a relevant piece of "text", ONLY THEN may you set "source_url" to null or an empty string, and set "source_title" to a brief description of the likely origin (e.g., "General web search results", "Wikipedia summary"). Prioritize finding valid URLs above all else.
+
         RESPONSE FORMAT: Your response MUST be in a strict JSON format, with no extra text or markdown.
 
         The JSON object must have these exact keys:
@@ -124,7 +128,7 @@ async function verifyWithGemini(claim, targetLang) { // Added targetLang paramet
         - "supporting_evidence": An array of evidence objects (with source_url, source_title, text) that support the claim.
         - "contradicting_evidence": An array of evidence objects (with source_url, source_title, text) that contradict the claim.
 
-        FINAL LANGUAGE REQUIREMENT: All textual output in the JSON ('overall_summary', 'reasoning', 'sub_claim') MUST be written strictly in the language code: ${targetLang}. For example, if the code is 'th', all text must be in Thai. If the code is 'en', all text must be in English. NO EXCEPTIONS.
+        FINAL LANGUAGE REQUIREMENT: All textual output in the JSON ('overall_summary', 'reasoning', 'sub_claim', 'source_title' if using fallback) MUST be written strictly in the language code: ${targetLang}. For example, if the code is 'th', all text must be in Thai. If the code is 'en', all text must be in English. NO EXCEPTIONS.
 
         ---
         Claim to verify: "${claim}"
