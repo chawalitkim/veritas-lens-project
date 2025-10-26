@@ -255,7 +255,8 @@
                 "no-evidence-supporting": "No direct supporting evidence found.",
                 "no-evidence-contradicting": "No direct contradicting evidence found.",
                 "source-title-fallback": "Source",
-                "source-unavailable": "Source Unavailable"
+                "source-unavailable": "Source Unavailable",
+                "source-origin-description": "Source: " // Added for fallback display
             },
             th: {
                 "main-title": "ระบบตรวจสอบข้อเท็จจริงปัญญาประดิษฐ์ทางการศึกษา<br>เพื่อส่งเสริมสัมมาทิฏฐิและการรู้ทันดิจิทัลของนักศึกษา",
@@ -291,7 +292,8 @@
                 "no-evidence-supporting": "ไม่พบหลักฐานสนับสนุนโดยตรง",
                 "no-evidence-contradicting": "ไม่พบหลักฐานโต้แย้งโดยตรง",
                 "source-title-fallback": "แหล่งที่มา",
-                "source-unavailable": "ไม่พบแหล่งที่มา"
+                "source-unavailable": "ไม่พบแหล่งที่มา",
+                "source-origin-description": "ที่มา: " // Added for fallback display
             }
         };
         
@@ -534,9 +536,14 @@
             
             let sourceElement = '';
             const fallbackTitle = translations[currentLang]['source-title-fallback'];
+            const unavailableText = translations[currentLang]['source-unavailable'];
+            const originDesc = translations[currentLang]['source-origin-description'];
+
             if (item.source_url && item.source_url.includes('vertexaisearch.cloud.google.com')) {
+                // Case 1: Internal Google redirect link
                 sourceElement = `<span class="text-gray-500 inline-flex items-center space-x-1" title="This source is a temporary web search result from the AI and cannot be opened directly."><span>Source: Web Search</span><i data-lucide="search" class="w-3 h-3"></i></span>`;
             } else if (item.source_url) {
+                // Case 2: A valid URL is provided
                 let displayTitle = item.source_title;
                 if (!displayTitle) {
                     try {
@@ -546,8 +553,11 @@
                     }
                 }
                 sourceElement = `<a href="${item.source_url}" target="_blank" rel="noopener noreferrer" class="text-blue-400 hover:underline inline-flex items-center space-x-1 break-all" title="${item.source_url}"><span>${displayTitle}</span><i data-lucide="arrow-up-right" class="w-3 h-3"></i></a>`;
+            } else if (item.source_title) {
+                // Case 3: No URL, but fallback description provided by AI
+                 sourceElement = `<span class="text-gray-500 inline-flex items-center space-x-1"><span>${originDesc}${item.source_title}</span><i data-lucide="info" class="w-3 h-3"></i></span>`;
             } else {
-                const unavailableText = translations[currentLang]['source-unavailable'];
+                 // Case 4: No URL and no fallback description
                 sourceElement = `<span class="text-gray-500 inline-flex items-center space-x-1"><span>${unavailableText}</span><i data-lucide="link-2-off" class="w-3 h-3"></i></span>`;
             }
 
