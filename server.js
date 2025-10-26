@@ -18,7 +18,7 @@ app.use(cors({ origin: '*' }));
 app.use(express.json());
 
 app.get('/', (req, res) => {
-  res.send('Veritas Lens AI Server is running! - v5 Final');
+  res.send('Veritas Lens AI Server is running! - v5 Final'); // Updated version check
 });
 
 app.post('/analyze', async (req, res) => {
@@ -28,8 +28,13 @@ app.post('/analyze', async (req, res) => {
     }
 
     try {
-        let geminiResponse = await verifyWithGemini(claim);
+        // Detect language of the input claim
+        const detectedLang = detectLanguage(claim);
 
+        // Pass the detected language to the verification function
+        let geminiResponse = await verifyWithGemini(claim, detectedLang);
+
+        // Assess credibility (no changes needed here)
         if (geminiResponse.supporting_evidence) {
             geminiResponse.supporting_evidence.forEach(evidence => {
                 evidence.credibility = assessSourceCredibility(evidence.source_url);
@@ -53,6 +58,19 @@ app.listen(port, () => {
     console.log(`Veritas Lens AI Server is running at http://localhost:${port}`);
 });
 
+/**
+ * NEW: Simple language detection function.
+ * Returns 'th' if Thai characters are detected, otherwise defaults to 'en'.
+ */
+function detectLanguage(text) {
+    // Basic check for Thai characters using Unicode range
+    if (/[\u0E00-\u0E7F]/.test(text)) {
+        return 'th';
+    }
+    return 'en';
+}
+
+
 function assessSourceCredibility(url) {
     if (!url || url.includes('vertexaisearch.cloud.google.com')) return 'Medium';
     try {
@@ -69,7 +87,10 @@ function assessSourceCredibility(url) {
     }
 }
 
-async function verifyWithGemini(claim) {
+/**
+ * Updated verifyWithGemini to accept and use the target language.
+ */
+async function verifyWithGemini(claim, targetLang) { // Added targetLang parameter
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
     
     const model = genAI.getGenerativeModel({ 
@@ -77,7 +98,7 @@ async function verifyWithGemini(claim) {
         tools: [{ "google_search": {} }],
     });
 
-    // FINAL PROMPT: Added a mandatory self-verification step and a penalty clause.
+    // FINAL PROMPT: Added explicit target language instruction at the end.
     const prompt = `
         You are an expert fact-checker. Your task is to verify the following claim by searching the web for credible, authoritative sources.
 
@@ -93,7 +114,7 @@ async function verifyWithGemini(claim) {
 
         PENALTY CLAUSE: Responses that include internal redirect URLs (like "vertexaisearch.cloud.google.com") will be considered a failure to follow instructions. You must find and provide the final destination URL.
 
-        RESPONSE FORMAT: Your response MUST be in a strict JSON format, with no extra text or markdown. All textual output (summaries, reasoning) MUST be in the same language as the original claim.
+        RESPONSE FORMAT: Your response MUST be in a strict JSON format, with no extra text or markdown.
 
         The JSON object must have these exact keys:
         - "overall_verdict": A string: "True", "False", or "Partially True".
@@ -103,7 +124,7 @@ async function verifyWithGemini(claim) {
         - "supporting_evidence": An array of evidence objects (with source_url, source_title, text) that support the claim.
         - "contradicting_evidence": An array of evidence objects (with source_url, source_title, text) that contradict the claim.
 
-        FINAL LANGUAGE CHECK: Ensure all string values in the JSON output ("overall_summary", "reasoning", "sub_claim") are written in the same language as the original 'Claim to verify'.
+        FINAL LANGUAGE REQUIREMENT: All textual output in the JSON ('overall_summary', 'reasoning', 'sub_claim') MUST be written strictly in the language code: ${targetLang}. For example, if the code is 'th', all text must be in Thai. If the code is 'en', all text must be in English. NO EXCEPTIONS.
 
         ---
         Claim to verify: "${claim}"
