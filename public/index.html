@@ -141,6 +141,13 @@
                 </div>
             </div>
 
+            <!-- NEW: Responsible Use Notification -->
+            <div id="responsible-use-notice" class="hidden bg-yellow-900/30 border border-yellow-700 text-yellow-300 px-4 py-3 rounded-lg mb-4 text-sm fade-in flex items-start space-x-3">
+                <i data-lucide="alert-circle" class="w-5 h-5 flex-shrink-0 mt-0.5"></i>
+                <p data-lang-id="responsible-use-text"></p>
+            </div>
+
+
             <!-- Main Results Card -->
             <div id="results-card" class="bg-gray-800 border border-gray-700 rounded-lg p-6 hidden fade-in">
                 <!-- Verdict Header -->
@@ -237,6 +244,7 @@
                 "clear-btn-text": "Clear",
                 "stop-btn-text": "Stop Analysis",
                 "loading-text": "Analyzing evidence and sources...",
+                "responsible-use-text": "Reminder: This AI analysis provides a preliminary assessment. Please use the information obtained with righteousness and digital savvy, verifying critical details independently.",
                 "detailed-analysis-title": "Detailed Analysis",
                 "supporting-evidence-title": "Supporting Evidence",
                 "contradicting-evidence-title": "Contradicting Evidence",
@@ -256,7 +264,7 @@
                 "no-evidence-contradicting": "No direct contradicting evidence found.",
                 "source-title-fallback": "Source",
                 "source-unavailable": "Source Unavailable",
-                "source-origin-description": "Source: " // Added for fallback display
+                "source-origin-description": "Source: "
             },
             th: {
                 "main-title": "ระบบตรวจสอบข้อเท็จจริงปัญญาประดิษฐ์ทางการศึกษา<br>เพื่อส่งเสริมสัมมาทิฏฐิและการรู้ทันดิจิทัลของนักศึกษา",
@@ -274,6 +282,7 @@
                 "clear-btn-text": "ล้างข้อมูล",
                 "stop-btn-text": "หยุดการวิเคราะห์",
                 "loading-text": "กำลังวิเคราะห์หลักฐานและแหล่งข้อมูล...",
+                 "responsible-use-text": "ข้อควรจำ: การวิเคราะห์โดย AI นี้เป็นการประเมินเบื้องต้น โปรดใช้ข้อมูลที่ได้รับด้วยสัมมาทิฏฐิและการรู้ทันดิจิทัล และตรวจสอบรายละเอียดที่สำคัญด้วยตนเองอีกครั้ง",
                 "detailed-analysis-title": "การวิเคราะห์เชิงลึก",
                 "supporting-evidence-title": "หลักฐานสนับสนุน",
                 "contradicting-evidence-title": "หลักฐานโต้แย้ง",
@@ -293,7 +302,7 @@
                 "no-evidence-contradicting": "ไม่พบหลักฐานโต้แย้งโดยตรง",
                 "source-title-fallback": "แหล่งที่มา",
                 "source-unavailable": "ไม่พบแหล่งที่มา",
-                "source-origin-description": "ที่มา: " // Added for fallback display
+                "source-origin-description": "ที่มา: "
             }
         };
         
@@ -355,11 +364,18 @@
             document.querySelectorAll('[data-lang-id]').forEach(element => {
                 const key = element.getAttribute('data-lang-id');
                 if (langStrings[key]) {
-                    element.textContent = langStrings[key];
+                    // Special handling for the placeholder
+                    if (element.id === 'claim-input' && key === 'claim-input-placeholder') {
+                        element.placeholder = langStrings[key];
+                    } else {
+                        element.textContent = langStrings[key];
+                    }
                 }
             });
             
-            document.getElementById('claim-input').placeholder = langStrings["claim-input-placeholder"];
+            // Re-select placeholder element and set it directly as sometimes attribute setting might lag
+             document.getElementById('claim-input').placeholder = langStrings["claim-input-placeholder"];
+
 
             const langThButton = document.getElementById('lang-th');
             const langEnButton = document.getElementById('lang-en');
@@ -409,22 +425,29 @@
                     showError(`Analysis failed: ${error.message}`);
                 }
             } finally {
-                document.getElementById('loading-spinner').classList.add('hidden');
-                document.getElementById('stop-button').classList.add('hidden');
-                document.getElementById('button-group').classList.remove('hidden');
-                 if (!document.getElementById('error-container').classList.contains('hidden')) {
-                     document.getElementById('results-container').classList.add('hidden');
-                 } else {
-                     document.getElementById('results-card').classList.remove('hidden');
-                     document.getElementById('feedback-section').classList.remove('hidden');
-                 }
+                // Ensure UI updates correctly regardless of success or failure (unless aborted)
+                if (abortController.signal.aborted) {
+                     resetUIState(true); // Ensure clean state if aborted
+                } else {
+                    document.getElementById('loading-spinner').classList.add('hidden');
+                    document.getElementById('stop-button').classList.add('hidden');
+                    document.getElementById('button-group').classList.remove('hidden');
+                    if (!document.getElementById('error-container').classList.contains('hidden')) {
+                        document.getElementById('results-container').classList.add('hidden'); // Hide results if error shown
+                    } else {
+                        document.getElementById('responsible-use-notice').classList.remove('hidden'); // Show notice first
+                        document.getElementById('results-card').classList.remove('hidden'); // Then show results
+                        document.getElementById('feedback-section').classList.remove('hidden');
+                    }
+                }
             }
         }
         
         // --- UI Helper Functions ---
         function stopAnalysis() {
-            abortController.abort();
+            abortController.abort(); // Send the abort signal
             console.log('Stop button clicked. Aborting fetch...');
+            // UI reset will happen in the 'finally' block of analyzeClaim when AbortError is caught
         }
         
         function clearAll() {
@@ -438,6 +461,7 @@
              document.getElementById('feedback-section').classList.add('hidden');
              document.getElementById('error-container').classList.add('hidden');
              document.getElementById('results-container').classList.add('hidden');
+             document.getElementById('responsible-use-notice').classList.add('hidden'); // Hide notice on reset
              if(isFullReset) {
                 document.getElementById('loading-spinner').classList.add('hidden');
                 document.getElementById('stop-button').classList.add('hidden');
@@ -448,6 +472,10 @@
         function showError(message) {
             document.getElementById('error-text').textContent = message;
             document.getElementById('error-container').classList.remove('hidden');
+            // Ensure other result elements are hidden when error occurs
+            document.getElementById('results-card').classList.add('hidden');
+            document.getElementById('feedback-section').classList.add('hidden');
+            document.getElementById('responsible-use-notice').classList.add('hidden');
         }
 
         function displayResults(data) {
@@ -459,7 +487,14 @@
             const subClaimList = document.getElementById('sub-claim-list');
             const supportingList = document.getElementById('supporting-evidence-list');
             const contradictingList = document.getElementById('contradicting-evidence-list');
+            const responsibleUseNotice = document.getElementById('responsible-use-notice');
 
+            // Update and show responsible use notice based on current language
+            responsibleUseNotice.querySelector('p').textContent = translations[currentLang]['responsible-use-text'];
+            responsibleUseNotice.classList.remove('hidden');
+
+
+            // Display Overall Verdict
             verdictText.textContent = data.overall_verdict;
             let iconHtml = '', iconBgClass = '', barBgClass = '';
             switch (data.overall_verdict) {
@@ -488,6 +523,7 @@
             confidenceBar.className = `h-2 rounded-full ${barBgClass}`;
             summaryText.textContent = data.overall_summary;
             
+            // Display Sub-Claim Analysis
             subClaimList.innerHTML = '';
             if(data.sub_claim_analysis && data.sub_claim_analysis.length > 0) {
                 document.getElementById('sub-claim-section').classList.remove('hidden');
@@ -498,8 +534,12 @@
                  document.getElementById('sub-claim-section').classList.add('hidden');
             }
 
+            // Display Evidence
             populateList(supportingList, data.supporting_evidence);
             populateList(contradictingList, data.contradicting_evidence);
+            
+             // Ensure icons are rendered after dynamic content is added
+            lucide.createIcons();
         }
         
         function createSubClaimItem(item) {
@@ -520,7 +560,7 @@
                      iconColor = 'text-yellow-400';
             }
             div.innerHTML = `<div class="flex-shrink-0 ${iconColor} pt-0.5">${iconHtml}</div><div><p class="font-semibold text-gray-200">${item.sub_claim}</p><p class="text-gray-400">${item.reasoning}</p></div>`;
-            lucide.createIcons();
+            // Note: No need to call lucide.createIcons() here repeatedly
             return div;
         }
 
@@ -554,7 +594,7 @@
                 }
                 sourceElement = `<a href="${item.source_url}" target="_blank" rel="noopener noreferrer" class="text-blue-400 hover:underline inline-flex items-center space-x-1 break-all" title="${item.source_url}"><span>${displayTitle}</span><i data-lucide="arrow-up-right" class="w-3 h-3"></i></a>`;
             } else if (item.source_title) {
-                // Case 3: No URL, but fallback description provided by AI
+                 // Case 3: No URL, but fallback description provided by AI
                  sourceElement = `<span class="text-gray-500 inline-flex items-center space-x-1"><span>${originDesc}${item.source_title}</span><i data-lucide="info" class="w-3 h-3"></i></span>`;
             } else {
                  // Case 4: No URL and no fallback description
@@ -578,7 +618,8 @@
             evidenceArray.forEach(item => {
                 listElement.appendChild(createEvidenceItem(item));
             });
-            lucide.createIcons();
+            // Call lucide.createIcons() once after all items are added
+            lucide.createIcons(); 
         }
     </script>
 
