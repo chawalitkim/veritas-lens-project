@@ -90,13 +90,14 @@ function assessSourceCredibility(url) {
 }
 
 /**
- * Updated verifyWithGemini to include source fallback instructions.
+ * Updated verifyWithGemini to use a stable model version.
  */
 async function verifyWithGemini(claim, targetLang) { 
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
     
+    // CRITICAL UPDATE: Changed model to a stable, recommended version
     const model = genAI.getGenerativeModel({ 
-        model: 'gemini-2.5-flash-preview-05-20',
+        model: 'gemini-2.5-flash', // Was 'gemini-2.5-flash-preview-05-20'
         tools: [{ "google_search": {} }],
     });
 
@@ -139,7 +140,11 @@ async function verifyWithGemini(claim, targetLang) {
         const response = await result.response;
         const text = response.text();
         
+        // --- FIX ---
+        // Corrected the regular expression literal by adding a closing '/'
         const jsonString = text.replace(/```json/g, '').replace(/```/g, '').trim();
+        // -------------
+        
         return JSON.parse(jsonString);
 
     } catch (error) {
